@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* نفس التوكنز الموجودة بـ tailwind.config.ts — متوفرة كمتغيرات CSS
+       للحالات اللي بنحتاج فيها لون محسوب (زي ألوان المراحل الجاية من قاعدة البيانات) */
+    --page: #f6f7fb;
+    --card: #ffffff;
+    --line: #e6e9f0;
+    --ink: #1b2437;
+    --ink-muted: #6b7280;
+    --accent: #5b4ce0;
+
+    --radius-card: 12px;
+    --radius-input: 8px;
+    --radius-pill: 999px;
+
+    --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06);
+  }
+
+  html {
+    /* الأرقام لاتينية دايماً (1234) مش هندية (١٢٣٤) */
+    font-feature-settings: 'lnum' 1;
+  }
+
+  body {
+    @apply bg-page text-ink antialiased;
+    font-variant-numeric: lining-nums;
+  }
+
+  /* الأرقام والحقول الرقمية والتواريخ بتضل LTR جوّا نص عربي */
+  .num {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+  }
+
+  ::selection {
+    background: #e0dcfa;
+  }
+
+  /* مؤشر تركيز واضح — مهم لناس ما بتعرف تستعمل الأنظمة */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* البطاقة الأساسية — سطح أبيض على خلفية رمادية فاتحة */
+  .surface {
+    @apply rounded-card border border-line bg-card shadow-card;
+  }
+
+  /* حبة الحالة الملوّنة: خلفية صلبة ونص أبيض عريض */
+  .pill {
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-xs font-bold text-white;
+  }
+
+  /* صفوف الجداول ما بتنضغط أبداً تحت 56px */
+  .row {
+    @apply min-h-row transition-colors duration-150;
+  }
+}
+
+@layer utilities {
+  /* شريط تمرير خفيف — البورد بيصير مزحوم بغير هيك */
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: #d7dbe5 transparent;
+  }
+  .scroll-slim::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  .scroll-slim::-webkit-scrollbar-thumb {
+    background: #d7dbe5;
+    border-radius: 999px;
+  }
+  .scroll-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
