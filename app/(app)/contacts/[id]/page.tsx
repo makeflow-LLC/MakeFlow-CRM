@@ -17,17 +17,17 @@ import { emptyStates, microcopy, pageHints } from '@/lib/hints'
 import { formatDate, formatMoney, timeAgo } from '@/lib/utils'
 
 const SOURCE_LABELS: Record<string, string> = {
-  whatsapp_bot: 'بوت الواتساب',
+  whatsapp_bot: 'بوت واتساب',
   facebook_ad: 'إعلان فيسبوك',
   referral: 'توصية',
   workshop: 'ورشة',
   manual: 'إدخال يدوي',
-  other: 'غير ذلك',
+  other: 'أخرى',
 }
 
 const PAYMENT_LABELS: Record<string, string> = {
   paid: 'مدفوعة',
-  needs_checking: 'تحتاج تحقق',
+  needs_checking: 'بانتظار التحقق',
   not_paid: 'غير مدفوعة',
   refunded: 'مرتجعة',
 }
@@ -63,23 +63,23 @@ export default async function ContactPage({ params }: { params: { id: string } }
                     {contact.phone}
                   </a>
                 </Row>
-                <Row label="البريد">{contact.email ?? '—'}</Row>
+                <Row label="البريد الإلكتروني">{contact.email ?? '—'}</Row>
                 <Row label={<span className="inline-flex items-center gap-1">المصدر <HintTooltip term="source" /></span>}>
                   {SOURCE_LABELS[contact.source] ?? contact.source}
                 </Row>
                 <Row label={<span className="inline-flex items-center gap-1">المسؤول <HintTooltip term="owner" /></span>}>
                   <span className="flex items-center gap-2">
                     <OwnerAvatar owner={owner} />
-                    <span className="text-ink">{owner?.full_name ?? 'غير مسند'}</span>
+                    <span className="text-ink">{owner?.full_name ?? 'غير مُسنَد'}</span>
                   </span>
                 </Row>
-                <Row label="مسجّل من">{formatDate(contact.created_at)}</Row>
+                <Row label="تاريخ التسجيل">{formatDate(contact.created_at)}</Row>
               </dl>
 
               <Button asChild variant="outline" className="w-full">
                 <a href={`tel:${contact.phone}`}>
                   <Phone className="h-4 w-4" />
-                  اتصل فيه
+                  اتصل
                 </a>
               </Button>
             </CardBody>
@@ -112,7 +112,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
                 </Link>
               ) : (
                 <p className="text-sm leading-relaxed text-ink-muted">
-                  مش مربوط بأي جهة — هاد عادي، طلاب الأكاديمية بيجوا كأفراد.
+                  غير مرتبط بأي جهة، وهذا معتاد: طلاب الأكاديمية يسجّلون كأفراد.
                 </p>
               )}
             </CardBody>
@@ -126,7 +126,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
               النشاط
               <HintTooltip term="activity" />
             </CardTitle>
-            <span className="text-xs text-ink-muted">الأحدث أولاً</span>
+            <span className="text-xs text-ink-muted">مرتّب من الأحدث</span>
           </CardHeader>
 
           <div className="flex-1 space-y-4 p-6">
@@ -165,7 +165,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
 
           {/* صندوق تسجيل النشاط — ملاصق لتحت */}
           <div className="sticky bottom-0 space-y-2 rounded-b-card border-t border-line bg-card p-4">
-            <Textarea rows={2} placeholder="شو صار مع هالعميل؟ اكتبه هون عشان ما تنساه…" />
+            <Textarea rows={2} placeholder="ما الذي جرى مع هذا العميل؟ دوّنه هنا حتى لا يُنسى…" />
             <Button size="sm">{microcopy.buttons.addActivity}</Button>
           </div>
         </Card>
@@ -200,7 +200,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
                       </span>
                       {d.paid_total > 0 && (
                         <span className="text-xs font-semibold text-success">
-                          مدفوع <span className="num">{formatMoney(d.paid_total)}</span>
+                          المسدَّد <span className="num">{formatMoney(d.paid_total)}</span>
                         </span>
                       )}
                     </div>
@@ -246,7 +246,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
               </Card>
             ) : (
               <p className="rounded-card bg-page px-4 py-6 text-center text-sm text-ink-muted">
-                ما في دفعات مسجّلة لهالشخص.
+                لا توجد دفعات مسجَّلة لهذا الشخص.
               </p>
             )}
           </div>

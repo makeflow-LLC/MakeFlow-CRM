@@ -41,7 +41,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-ink">Makeflow</p>
-            <p className="truncate text-xs text-ink-muted">نظام العملاء</p>
+            <p className="truncate text-xs text-ink-muted">إدارة العملاء</p>
           </div>
         )}
       </div>
@@ -74,13 +74,13 @@ export function Sidebar() {
         onClick={() => setCollapsed((v) => !v)}
         className="flex items-center gap-3 border-t border-line px-4 py-4 text-sm font-semibold text-ink-muted transition-colors duration-150 hover:text-ink"
       >
-        {/* الأيقونة مرآة — بالعربي الطي بيروح لليمين */}
+        {/* الأيقونة مرآة — بالعربي الطي يتجه لليمين */}
         {collapsed ? (
           <PanelRightOpen className="h-5 w-5 shrink-0" />
         ) : (
           <>
             <PanelRightClose className="h-5 w-5 shrink-0" />
-            <span>اطوِ القائمة</span>
+            <span>طيّ القائمة</span>
           </>
         )}
       </button>
@@ -88,7 +88,7 @@ export function Sidebar() {
   )
 }
 
-/** شريط سفلي للموبايل — البورد بيصير قائمة، والتنقل بيصير تحت */
+/** شريط سفلي للموبايل — البورد يتم قائمة، والتنقل يتم تحت */
 export function MobileNav() {
   const pathname = usePathname()
   const isActive = (href: string) =>

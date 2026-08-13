@@ -7,7 +7,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-page">
-      {/* بالعربي أول عنصر بالصف بيطلع على اليمين — فالسايدبار يمين تلقائياً */}
+      {/* بالعربي أول عنصر بالصف يظهر على اليمين — فالسايدبار يمين تلقائياً */}
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -21,13 +21,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 }
 
-/** شريط بيوضّح إنو البيانات تجريبية — عشان ما حدا يظن إنها بياناته الحقيقية */
+/** شريط يوضّح إنو البيانات تجريبية — حتى ما حدا يظن إنها بياناته الحقيقية */
 function DemoBanner() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 bg-accent-soft px-4 py-2 text-center text-xs font-semibold text-accent">
-      <span>هاي بيانات تجريبية للمعاينة.</span>
+      <span>هذه بيانات تجريبية للمعاينة.</span>
       <span className="font-normal">
-        أول ما تحط مفاتيح Supabase بملف .env.local، بتشوف بياناتك الحقيقية.
+        بمجرّد إضافة مفاتيح Supabase إلى ملف ‎.env.local‎ ستظهر بياناتك الحقيقية.
       </span>
     </div>
   )

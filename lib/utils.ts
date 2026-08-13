@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** الأرقام لاتينية دايماً، وبفواصل آلاف — 1,250 مش ١٢٥٠ */
+/** الأرقام لاتينية دايماً، وبفواصل آلاف — 1,250 ليس ١٢٥٠ */
 export function formatNumber(n: number): string {
   return new Intl.NumberFormat('en-US').format(n)
 }
@@ -27,62 +27,79 @@ export function formatDate(iso: string | null): string {
   return `${d.getDate()} ${AR_MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 
-/** وقت نسبي بلغة محكية: «من ساعتين»، «من 3 أيام» */
+/**
+ * صيغة الجمع في العربية الفصحى: المفرد، ثم المثنى، ثم جمع القلة (3-10)،
+ * ثم التمييز المفرد المنصوب (11 فأكثر). تطبيقها يجعل النص يقرأ صحيحاً
+ * بدل «3 يوم» أو «15 أيام».
+ */
+export function pluralize(
+  n: number,
+  forms: { one: string; two: string; few: string; many: string },
+): string {
+  if (n === 1) return forms.one
+  if (n === 2) return forms.two
+  if (n >= 3 && n <= 10) return `${n} ${forms.few}`
+  return `${n} ${forms.many}`
+}
+
+const MINUTE = { one: 'دقيقة', two: 'دقيقتين', few: 'دقائق', many: 'دقيقة' }
+const HOUR = { one: 'ساعة', two: 'ساعتين', few: 'ساعات', many: 'ساعة' }
+const DAY = { one: 'يوم', two: 'يومين', few: 'أيام', many: 'يوماً' }
+const MONTH = { one: 'شهر', two: 'شهرين', few: 'أشهر', many: 'شهراً' }
+
+export const ROW = { one: 'صف واحد', two: 'صفّان', few: 'صفوف', many: 'صفاً' }
+export const CONTACT = {
+  one: 'جهة اتصال واحدة', two: 'جهتا اتصال',
+  few: 'جهات اتصال', many: 'جهة اتصال',
+}
+
+/** مدة منقضية: «قبل ساعتين»، «قبل 3 أيام» */
 export function timeAgo(iso: string | null): string {
   if (!iso) return '—'
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
 
-  if (mins < 1) return 'هلأ'
-  if (mins < 60) return `من ${mins} دقيقة`
+  if (mins < 1) return 'الآن'
+  if (mins < 60) return `قبل ${pluralize(mins, MINUTE)}`
 
   const hrs = Math.floor(mins / 60)
-  if (hrs === 1) return 'من ساعة'
-  if (hrs === 2) return 'من ساعتين'
-  if (hrs < 24) return `من ${hrs} ساعات`
+  if (hrs < 24) return `قبل ${pluralize(hrs, HOUR)}`
 
   const d = Math.floor(hrs / 24)
-  if (d === 1) return 'من يوم'
-  if (d === 2) return 'من يومين'
-  if (d < 30) return `من ${d} أيام`
+  if (d < 30) return `قبل ${pluralize(d, DAY)}`
 
-  const m = Math.floor(d / 30)
-  if (m === 1) return 'من شهر'
-  if (m === 2) return 'من شهرين'
-  return `من ${m} شهور`
+  return `قبل ${pluralize(Math.floor(d / 30), MONTH)}`
 }
 
-/** «باقي 3 أيام» / «متأخر 2 يوم» — للتجديدات والمهام */
+/** موعد قادم أو فائت: «بعد 3 أيام»، «متأخر يومين» */
 export function daysLabel(days: number | null): string {
   if (days === null) return '—'
   if (days === 0) return 'اليوم'
-  if (days === 1) return 'بكرا'
-  if (days === -1) return 'متأخر يوم'
-  if (days < 0) return `متأخر ${Math.abs(days)} يوم`
-  return `باقي ${days} يوم`
+  if (days === 1) return 'غداً'
+  if (days < 0) return `متأخر ${pluralize(Math.abs(days), DAY)}`
+  return `بعد ${pluralize(days, DAY)}`
 }
 
+/** مدة التوقف على المرحلة: «3 أيام»، «ساعتين» */
 export function hoursLabel(hours: number): string {
   const d = Math.floor(hours / 24)
-  if (d < 1) return `${hours} ساعة`
-  if (d === 1) return 'يوم'
-  if (d === 2) return 'يومين'
-  return `${d} أيام`
+  if (d < 1) return pluralize(hours, HOUR)
+  return pluralize(d, DAY)
 }
 
-/** الحروف الأولى للأفاتار */
+/** الحروف الأولى للصورة الرمزية */
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter((p) => !['د.', 'أ.', 'م.'].includes(p))
   return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
 }
 
-/** التحقق من الرقم: لازم يبدأ بـ +970 أو +972 */
+/** التحقق من الرقم: يجب أن يبدأ بـ +970 أو +972 */
 export function isValidPhone(phone: string): boolean {
   const normalized = normalizePhone(phone)
   return /^\+(970|972)[0-9]{8,9}$/.test(normalized)
 }
 
-/** نفس منطق normalize_phone بقاعدة البيانات — الرقم المحلي بيصير +970 */
+/** المنطق نفسه المطبَّق في normalize_phone بقاعدة البيانات */
 export function normalizePhone(input: string): string {
   const digits = input.replace(/[^0-9+]/g, '')
   if (digits.startsWith('00')) return '+' + digits.slice(2)

@@ -61,9 +61,9 @@ export default async function ReportsPage() {
             </p>
             <p className="num mb-3 text-4xl font-bold text-accent">{c.rate}%</p>
             <div className="flex flex-wrap gap-4 text-xs text-ink-muted">
-              <span>الكل <span className="num font-bold text-ink">{formatNumber(c.total)}</span></span>
-              <span>ربحنا <span className="num font-bold text-success">{formatNumber(c.won)}</span></span>
-              <span>خسرنا <span className="num font-bold text-danger">{formatNumber(c.lost)}</span></span>
+              <span>الإجمالي <span className="num font-bold text-ink">{formatNumber(c.total)}</span></span>
+              <span>ناجحة <span className="num font-bold text-success">{formatNumber(c.won)}</span></span>
+              <span>خاسرة <span className="num font-bold text-danger">{formatNumber(c.lost)}</span></span>
             </div>
           </Card>
         ))}
@@ -105,7 +105,7 @@ export default async function ReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle>الإيراد شهرياً</CardTitle>
-            <span className="text-xs text-ink-muted">آخر 6 شهور</span>
+            <span className="text-xs text-ink-muted">آخر ستة أشهر</span>
           </CardHeader>
           <CardBody>
             <MonthlyRevenueChart data={monthly} />
@@ -149,7 +149,7 @@ export default async function ReportsPage() {
               </ul>
             ) : (
               <p className="py-12 text-center text-sm leading-relaxed text-ink-muted">
-                ما خسرنا ولا صفقة بعد — وهاد خبر منيح.
+                لم نخسر أي صفقة حتى الآن.
               </p>
             )}
           </CardBody>

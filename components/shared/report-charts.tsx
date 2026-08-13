@@ -21,7 +21,7 @@ export function HtmlBars({
   const show = (v: number) => (format === 'money' ? formatMoney(v) : formatNumber(v))
 
   if (!rows.length) {
-    return <p className="py-12 text-center text-sm text-ink-muted">ما في أرقام بعد.</p>
+    return <p className="py-12 text-center text-sm text-ink-muted">لا توجد أرقام بعد.</p>
   }
 
   return (
@@ -48,7 +48,7 @@ export function HtmlBars({
 
 const AXIS = { fontSize: 12, fontFamily: 'inherit', fill: '#6B7280' }
 
-/** الإيراد شهرياً — أسماء الشهور قصيرة، فالرسمة هون بتشتغل مضبوط */
+/** الإيراد شهرياً — أسماء الشهور قصيرة، فالرسمة هنا تعمل مضبوط */
 export function MonthlyRevenueChart({ data }: { data: { month: string; revenue: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>

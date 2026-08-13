@@ -29,13 +29,13 @@ export default function LoginPage() {
       const { createClient } = await import('@/lib/supabase/client')
       const { error } = await createClient().auth.signInWithPassword({ email, password })
       if (error) {
-        setError('الإيميل أو كلمة السر غلط. جرّب كمان مرة.')
+        setError('البريد الإلكتروني أو كلمة المرور غير صحيحة. أعد المحاولة.')
         return
       }
       router.push('/')
       router.refresh()
     } catch {
-      setError('ما قدرنا نتصل بالسيرفر. افحص الإنترنت وجرّب كمان مرة.')
+      setError('تعذّر الاتصال بالخادم. تحقّق من الإنترنت ثم أعد المحاولة.')
     } finally {
       setBusy(false)
     }
@@ -50,12 +50,12 @@ export default function LoginPage() {
               M
             </div>
             <h1 className="text-xl font-bold text-ink">Makeflow CRM</h1>
-            <p className="mt-1 text-sm text-ink-muted">سجّل دخولك عشان تشوف عملاءك</p>
+            <p className="mt-1 text-sm text-ink-muted">سجّل الدخول للوصول إلى بيانات عملائك</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="email">الإيميل</Label>
+              <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input
                 id="email"
                 type="email"
@@ -68,7 +68,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="password">كلمة السر</Label>
+              <Label htmlFor="password">كلمة المرور</Label>
               <Input
                 id="password"
                 type="password"
@@ -82,13 +82,13 @@ export default function LoginPage() {
             <FieldError>{error}</FieldError>
 
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? 'لحظة…' : 'ادخل'}
+              {busy ? 'جارٍ الدخول…' : 'تسجيل الدخول'}
             </Button>
           </form>
 
           {!live && (
             <p className="rounded-input bg-accent-soft p-3 text-center text-xs leading-relaxed text-accent">
-              إنت بوضع المعاينة — اضغط «ادخل» بدون بيانات وبتفوت على التطبيق.
+              أنت في وضع المعاينة: اضغط «تسجيل الدخول» دون بيانات للدخول إلى التطبيق.
             </p>
           )}
         </CardBody>

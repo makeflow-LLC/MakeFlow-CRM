@@ -7,16 +7,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/hints/empty-state'
+import { Toast } from '@/components/ui/toast'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatDate, formatMoney } from '@/lib/utils'
 import type { PaymentRow, PaymentStatus } from '@/lib/types'
 
 const FILTERS: { key: PaymentStatus | 'all'; label: string }[] = [
-  { key: 'needs_checking', label: 'تحتاج تحقق' },
-  { key: 'paid', label: 'مؤكدة' },
+  { key: 'needs_checking', label: 'بانتظار التحقق' },
+  { key: 'paid', label: 'مؤكَّدة' },
   { key: 'not_paid', label: 'غير مدفوعة' },
-  { key: 'all', label: 'الكل' },
+  { key: 'all', label: 'الجميع' },
 ]
 
 const STATUS_STYLE: Record<PaymentStatus, string> = {
@@ -27,10 +28,10 @@ const STATUS_STYLE: Record<PaymentStatus, string> = {
 }
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
-  paid: 'مؤكدة',
-  needs_checking: 'تحتاج تحقق',
+  paid: 'مؤكَّدة',
+  needs_checking: 'بانتظار التحقق',
   not_paid: 'غير مدفوعة',
-  refunded: 'مرتجعة',
+  refunded: 'مسترجعة',
 }
 
 export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; live: boolean }) {
@@ -38,6 +39,7 @@ export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; liv
   const [filter, setFilter] = useState<PaymentStatus | 'all'>('needs_checking')
   const [rows, setRows] = useState(initial)
   const [preview, setPreview] = useState<PaymentRow | null>(null)
+  const [toast, setToast] = useState('')
 
   const visible = useMemo(
     () => (filter === 'all' ? rows : rows.filter((p) => p.status === filter)),
@@ -58,7 +60,7 @@ export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; liv
       if (error) throw error
     } catch {
       setRows(initial)
-      alert(microcopy.errors.saveFailed)
+      setToast(microcopy.errors.saveFailed)
     }
   }
 
@@ -155,9 +157,9 @@ export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; liv
             ) : (
               <div className="flex flex-col items-center justify-center rounded-input bg-page py-12 text-center">
                 <Receipt className="mb-3 h-10 w-10 text-ink-muted" />
-                <p className="text-sm font-semibold text-ink">ما في صورة إيصال مرفقة</p>
+                <p className="text-sm font-semibold text-ink">لا توجد صورة إيصال مرفقة</p>
                 <p className="mt-1 max-w-xs text-xs leading-relaxed text-ink-muted">
-                  لما العميل يبعت صورة الإيصال عبر البوت، بتظهر هون وبتقدر تكبّرها.
+                  عند إرسال العميل صورة الإيصال عبر البوت، ستظهر هنا ويمكنك تكبيرها.
                 </p>
               </div>
             )}
@@ -207,6 +209,8 @@ export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; liv
           </div>
         </DialogContent>
       </Dialog>
+
+      {toast && <Toast message={toast} onClose={() => setToast('')} />}
     </>
   )
 }

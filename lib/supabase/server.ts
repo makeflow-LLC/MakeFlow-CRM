@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 /**
- * عميل Supabase على السيرفر — بيمرّر جلسة المستخدم عشان سياسات RLS
- * تشتغل باسمه. المفتاح المستعمل هون هو anon key فقط.
+ * عميل Supabase على السيرفر — يمرّر جلسة المستخدم حتى سياسات RLS
+ * تشتغل باسمه. المفتاح المستعمل هنا هو anon key فقط.
  */
 export function createClient() {
   const cookieStore = cookies()
@@ -20,7 +20,7 @@ export function createClient() {
               cookieStore.set(name, value, options),
             )
           } catch {
-            // بينادى من Server Component — التحديث بيصير بالـ middleware
+            // بينادى من Server Component — التحديث يتم بالـ middleware
           }
         },
       },

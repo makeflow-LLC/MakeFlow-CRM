@@ -15,7 +15,7 @@ import type { Contact, Product } from '@/lib/types'
 /**
  * الإضافة السريعة — 3 تبويبات، وكل تبويب 5 حقول كحد أقصى.
  *
- * أهم إشي فيها: حقل الهاتف بيدوّر على الرقم وقت الكتابة، وإذا كان مسجّل بيقترح
+ * أهم شيء فيها: حقل الهاتف بيدوّر على الرقم وقت الكتابة، وإذا كان مسجّل بيقترح
  * تفتح ملف الشخص بدل ما يعمل نسخة ثانية منه.
  */
 export function QuickAdd({ contacts, products }: { contacts: Contact[]; products: Product[] }) {
@@ -37,7 +37,7 @@ export function QuickAdd({ contacts, products }: { contacts: Contact[]; products
       <DialogContent>
         <DialogTitle>{microcopy.buttons.quickAdd}</DialogTitle>
         <DialogDescription>
-          اختار شو بدك تضيف. كل تبويب فيه أقل عدد حقول ممكن — الباقي بتعبّيه بعدين.
+          اختر ما تريد إضافته. كل تبويب يضم أقل عدد ممكن من الحقول، وتستكمل البقية لاحقاً.
         </DialogDescription>
 
         <Tabs defaultValue="contact" className="mt-4">
@@ -62,11 +62,11 @@ export function QuickAdd({ contacts, products }: { contacts: Contact[]; products
   )
 }
 
-/** رسالة بتظهر بعد الحفظ بوضع المعاينة */
+/** رسالة تظهر بعد الحفظ بوضع المعاينة */
 function DemoNote() {
   return (
     <p className="rounded-input bg-accent-soft p-3 text-xs leading-relaxed text-accent">
-      إنت بوضع المعاينة، فالبيانات ما بتنحفظ. أول ما تربط Supabase بيشتغل الحفظ عادي.
+      {microcopy.demoNote}
     </p>
   )
 }
@@ -100,7 +100,7 @@ function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => 
     >
       <div className="space-y-1">
         <Label htmlFor="qa-name">الاسم</Label>
-        <Input id="qa-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً: أحمد صالح" />
+        <Input id="qa-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: أحمد صالح" />
         <FieldError>{nameError}</FieldError>
       </div>
 
@@ -168,14 +168,14 @@ function DealForm({
       }}
     >
       <div className="space-y-1">
-        <Label htmlFor="qa-contact">مين العميل؟</Label>
+        <Label htmlFor="qa-contact">من العميل؟</Label>
         <select
           id="qa-contact"
           value={contactId}
           onChange={(e) => setContactId(e.target.value)}
           className="h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
         >
-          <option value="">اختار شخص…</option>
+          <option value="">اختر شخصاً…</option>
           {contacts.map((c) => (
             <option key={c.id} value={c.id}>{c.full_name}</option>
           ))}
@@ -184,7 +184,7 @@ function DealForm({
 
       <div className="space-y-1">
         <Label htmlFor="qa-product">
-          مهتم بأي منتج؟
+          ما المنتج محلّ الاهتمام؟
           <HintTooltip term="deal" />
         </Label>
         <select
@@ -197,7 +197,7 @@ function DealForm({
           }}
           className="h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
         >
-          <option value="">اختار منتج…</option>
+          <option value="">اختر منتجاً…</option>
           {products.filter((p) => p.active).map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
@@ -244,14 +244,14 @@ function ActivityForm({ contacts, onDone }: { contacts: Contact[]; onDone: () =>
       }}
     >
       <div className="space-y-1">
-        <Label htmlFor="qa-act-contact">مع مين كان التواصل؟</Label>
+        <Label htmlFor="qa-act-contact">مع من جرى التواصل؟</Label>
         <select
           id="qa-act-contact"
           value={contactId}
           onChange={(e) => setContactId(e.target.value)}
           className="h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
         >
-          <option value="">اختار شخص…</option>
+          <option value="">اختر شخصاً…</option>
           {contacts.map((c) => (
             <option key={c.id} value={c.id}>{c.full_name}</option>
           ))}
@@ -277,13 +277,13 @@ function ActivityForm({ contacts, onDone }: { contacts: Contact[]; onDone: () =>
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="qa-act-summary">شو صار باختصار؟</Label>
+        <Label htmlFor="qa-act-summary">ملخّص ما جرى</Label>
         <Textarea
           id="qa-act-summary"
           rows={3}
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
-          placeholder="حكيت معه، قال رح يحوّل هالأسبوع"
+          placeholder="تحدّثت معه، وأفاد بأنه سيحوّل المبلغ هذا الأسبوع"
         />
       </div>
 

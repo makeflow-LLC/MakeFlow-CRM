@@ -43,7 +43,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
                 </p>
               )}
               <div className="border-t border-line pt-4">
-                <p className="mb-1 text-xs font-semibold text-ink-muted">الدخل الشهري من هالجهة</p>
+                <p className="mb-1 text-xs font-semibold text-ink-muted">الدخل الشهري من هذه الجهة</p>
                 <p className="num text-2xl font-bold text-success">{formatMoney(mrr)}</p>
               </div>
             </CardBody>
@@ -87,7 +87,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
               </Card>
             ) : (
               <p className="rounded-card bg-page px-4 py-6 text-center text-sm text-ink-muted">
-                ما في اشتراكات فعّالة مع هالجهة.
+                لا توجد اشتراكات فعّالة مع هذه الجهة.
               </p>
             )}
           </section>
@@ -109,13 +109,13 @@ export default async function OrganizationPage({ params }: { params: { id: strin
               </Card>
             ) : (
               <p className="rounded-card bg-page px-4 py-6 text-center text-sm text-ink-muted">
-                ما في صفقات مع هالجهة بعد.
+                لا توجد صفقات مع هذه الجهة بعد.
               </p>
             )}
           </section>
 
           <section>
-            <SectionHeader title="آخر نشاط" term="activity" />
+            <SectionHeader title="آخر الأنشطة" term="activity" />
             {activities.length ? (
               <Card className="divide-y divide-line overflow-hidden">
                 {activities.map((a) => (
@@ -135,7 +135,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
               </Card>
             ) : (
               <p className="rounded-card bg-page px-4 py-6 text-center text-sm text-ink-muted">
-                ما في نشاط مسجّل مع أشخاص هالجهة.
+                لا يوجد نشاط مسجَّل مع أشخاص هذه الجهة.
               </p>
             )}
           </section>

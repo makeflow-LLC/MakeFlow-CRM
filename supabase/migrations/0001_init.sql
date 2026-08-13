@@ -584,7 +584,7 @@ begin
 
   insert into public.activities (contact_id, deal_id, type, direction, summary, source)
   values (v_deal.contact_id, v_deal.id, 'system', 'none',
-          'تحرّكت الصفقة تلقائياً لمرحلة «' || v_paid_stage.name || '» بعد تأكيد الدفع', 'manual');
+          'انتقلت الصفقة تلقائياً إلى مرحلة «' || v_paid_stage.name || '» بعد تأكيد الدفع', 'manual');
 
   return null;
 end;

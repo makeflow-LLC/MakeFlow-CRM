@@ -11,7 +11,7 @@ import { cn, daysLabel, formatMoney, formatNumber } from '@/lib/utils'
 const STATUS_LABELS: Record<string, string> = {
   active: 'فعّال',
   paused: 'موقوف مؤقتاً',
-  churned: 'انسحب',
+  churned: 'منتهٍ',
 }
 
 export default async function SubscriptionsPage() {
@@ -44,7 +44,7 @@ export default async function SubscriptionsPage() {
             </p>
             <p className="num mb-1 text-5xl font-bold text-ink">{formatMoney(mrr)}</p>
             <p className="mb-6 text-sm text-ink-muted">
-              من <span className="num font-bold text-ink">{formatNumber(active.length)}</span> اشتراك فعّال
+              من <span className="num font-bold text-ink">{formatNumber(active.length)}</span> اشتراكاً فعّالاً
             </p>
 
             {byProduct.length > 0 && (

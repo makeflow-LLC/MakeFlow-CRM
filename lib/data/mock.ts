@@ -1,9 +1,9 @@
 /**
  * بيانات تجريبية للمعاينة.
  *
- * بتشتغل بس لما ما يكون في مفاتيح Supabase — عشان تقدر تفتح التطبيق وتشوفه
+ * تعمل بس لما ما يكون في مفاتيح Supabase — حتى تقدر تفتح التطبيق وتشوفه
  * بدون أي إعداد. نفس المنتجات والمراحل والألوان الموجودة بـ 0002_seed.sql،
- * والتواريخ محسوبة نسبة لليوم عشان الشاشات تضل حيّة.
+ * والتواريخ محسوبة نسبة لليوم حتى الشاشات تضل حيّة.
  */
 
 import type {
@@ -56,16 +56,16 @@ export const stages: Stage[] = [
 ]
 
 export const organizations: Organization[] = [
-  { id: 'o1', name: 'عيادة النور', type: 'clinic', sector: 'أسنان', city: 'غزة', website: null, notes: 'أكبر عيادة أسنان بالمنطقة، عندهم 3 أطباء.', owner_id: 'u2' },
+  { id: 'o1', name: 'عيادة النور', type: 'clinic', sector: 'أسنان', city: 'غزة', website: null, notes: 'أكبر عيادة أسنان في المنطقة، ولديها ثلاثة أطباء.', owner_id: 'u2' },
   { id: 'o2', name: 'صالون لمسة', type: 'salon', sector: 'تجميل', city: 'غزة', website: null, notes: null, owner_id: 'u2' },
-  { id: 'o3', name: 'محل الأمل للهواتف', type: 'shop', sector: 'إلكترونيات', city: 'خان يونس', website: null, notes: 'بيردوا بسرعة على الواتساب.', owner_id: 'u1' },
+  { id: 'o3', name: 'محل الأمل للهواتف', type: 'shop', sector: 'إلكترونيات', city: 'خان يونس', website: null, notes: 'سريعو الاستجابة على واتساب.', owner_id: 'u1' },
   { id: 'o4', name: 'مركز بيان التعليمي', type: 'school', sector: 'تعليم', city: 'غزة', website: null, notes: null, owner_id: 'u2' },
-  { id: 'o5', name: 'عيادة الشفاء التخصصية', type: 'clinic', sector: 'جلدية', city: 'رفح', website: null, notes: 'مهتمين بسمارت كلينيك بس بدهم تجربة أول.', owner_id: 'u1' },
+  { id: 'o5', name: 'عيادة الشفاء التخصصية', type: 'clinic', sector: 'جلدية', city: 'رفح', website: null, notes: 'مهتمون بـ SmartClinic، ويطلبون فترة تجربة أولاً.', owner_id: 'u1' },
 ]
 
 export const contacts: Contact[] = [
   { id: 'c1', full_name: 'أحمد صالح', phone: '+970599123456', email: null, city: 'غزة', preferred_language: 'ar', source: 'whatsapp_bot', source_detail: 'سأل عن دورة n8n', organization_id: null, role_in_org: null, owner_id: 'u2', notes: null, created_at: days(9) },
-  { id: 'c2', full_name: 'د. سامي حرب', phone: '+970599234567', email: 'sami@alnoor.ps', city: 'غزة', preferred_language: 'ar', source: 'referral', source_detail: 'صديق زميل', organization_id: 'o1', role_in_org: 'صاحب العيادة', owner_id: 'u2', notes: 'بيفضّل المكالمات بعد 6 المسا.', created_at: days(40) },
+  { id: 'c2', full_name: 'د. سامي حرب', phone: '+970599234567', email: 'sami@alnoor.ps', city: 'غزة', preferred_language: 'ar', source: 'referral', source_detail: 'صديق زميل', organization_id: 'o1', role_in_org: 'صاحب العيادة', owner_id: 'u2', notes: 'يفضّل المكالمات بعد الساعة السادسة مساءً.', created_at: days(40) },
   { id: 'c3', full_name: 'ليان عبد الله', phone: '+970598111222', email: null, city: 'غزة', preferred_language: 'ar', source: 'facebook_ad', source_detail: 'إعلان دورة المحتوى', organization_id: null, role_in_org: null, owner_id: 'u2', notes: null, created_at: days(4) },
   { id: 'c4', full_name: 'محمد أبو ندى', phone: '+970597333444', email: null, city: 'خان يونس', preferred_language: 'ar', source: 'whatsapp_bot', source_detail: null, organization_id: 'o3', role_in_org: 'صاحب المحل', owner_id: 'u1', notes: null, created_at: days(15) },
   { id: 'c5', full_name: 'رنا مشتهى', phone: '+970599555666', email: null, city: 'غزة', preferred_language: 'ar', source: 'workshop', source_detail: 'ورشة الأتمتة', organization_id: 'o2', role_in_org: 'مديرة الصالون', owner_id: 'u2', notes: null, created_at: days(22) },
@@ -84,7 +84,7 @@ export const deals: Deal[] = [
   { id: 'd4', title: 'خالد شاهين — دورة الأتمتة بالذكاء الاصطناعي (n8n)', contact_id: 'c9', organization_id: null, product_id: 'p1', pipeline_id: 'pl1', stage_id: 's3', stage_entered_at: hours(30), value: 250, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(2) },
   { id: 'd5', title: 'نور البطة — دورة الذكاء الاصطناعي للأعمال', contact_id: 'c10', organization_id: null, product_id: 'p2', pipeline_id: 'pl1', stage_id: 's5', stage_entered_at: hours(50), value: 250, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u3', created_at: days(18) },
   { id: 'd6', title: 'سلمى نجم — دورة صناعة المحتوى بالذكاء الاصطناعي', contact_id: 'c8', organization_id: 'o4', product_id: 'p3', pipeline_id: 'pl1', stage_id: 's6', stage_entered_at: days(5), value: 200, currency: 'ILS', status: 'won', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(30) },
-  { id: 'd7', title: 'رنا مشتهى — دورة الأتمتة بالذكاء الاصطناعي (n8n)', contact_id: 'c5', organization_id: 'o2', product_id: 'p1', pipeline_id: 'pl1', stage_id: 's7', stage_entered_at: days(3), value: 250, currency: 'ILS', status: 'lost', lost_reason: 'السعر غالي عليها هالفترة', expected_close_date: null, owner_id: 'u2', created_at: days(22) },
+  { id: 'd7', title: 'رنا مشتهى — دورة الأتمتة بالذكاء الاصطناعي (n8n)', contact_id: 'c5', organization_id: 'o2', product_id: 'p1', pipeline_id: 'pl1', stage_id: 's7', stage_entered_at: days(3), value: 250, currency: 'ILS', status: 'lost', lost_reason: 'السعر مرتفع بالنسبة لها في هذه الفترة', expected_close_date: null, owner_id: 'u2', created_at: days(22) },
 
   // --- B2B ---
   { id: 'd8', title: 'د. سامي حرب — SmartClinic', contact_id: 'c2', organization_id: 'o1', product_id: 'p5', pipeline_id: 'pl2', stage_id: 't5', stage_entered_at: days(12), value: 250, currency: 'ILS', status: 'won', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(40) },
@@ -95,28 +95,28 @@ export const deals: Deal[] = [
 ]
 
 export const activities: Activity[] = [
-  { id: 'a1', contact_id: 'c1', deal_id: 'd1', type: 'whatsapp', direction: 'in', summary: 'سأل عن سعر دورة n8n ومواعيدها', body: 'مرحبا، بدي أعرف تفاصيل دورة الأتمتة والسعر', occurred_at: days(9), created_by: null, source: 'bot' },
-  { id: 'a2', contact_id: 'c1', deal_id: 'd1', type: 'whatsapp', direction: 'out', summary: 'البوت بعتله التفاصيل والسعر', body: null, occurred_at: days(9), created_by: null, source: 'bot' },
+  { id: 'a1', contact_id: 'c1', deal_id: 'd1', type: 'whatsapp', direction: 'in', summary: 'سأل عن سعر دورة n8n ومواعيدها', body: 'مرحباً، أريد معرفة تفاصيل دورة الأتمتة وسعرها', occurred_at: days(9), created_by: null, source: 'bot' },
+  { id: 'a2', contact_id: 'c1', deal_id: 'd1', type: 'whatsapp', direction: 'out', summary: 'أرسل البوت إليه التفاصيل والسعر', body: null, occurred_at: days(9), created_by: null, source: 'bot' },
   { id: 'a3', contact_id: 'c1', deal_id: 'd1', type: 'whatsapp', direction: 'in', summary: 'وافق على التسجيل وطلب رقم الحساب', body: null, occurred_at: days(4), created_by: null, source: 'bot' },
-  { id: 'a4', contact_id: 'c1', deal_id: 'd1', type: 'call', direction: 'out', summary: 'حكيت معه، قال رح يحوّل هالأسبوع', body: 'مشغول بالشغل، وعد يحوّل يوم الخميس.', occurred_at: hours(74), created_by: 'u2', source: 'manual' },
-  { id: 'a5', contact_id: 'c2', deal_id: 'd8', type: 'meeting', direction: 'none', summary: 'اجتماع بالعيادة — عرضنا سمارت كلينيك', body: 'عجبه نظام الحجوزات، سأل عن الدعم الفني.', occurred_at: days(20), created_by: 'u2', source: 'manual' },
-  { id: 'a6', contact_id: 'c2', deal_id: 'd8', type: 'system', direction: 'none', summary: 'تحرّكت الصفقة تلقائياً لمرحلة «تعاقد» بعد تأكيد الدفع', body: null, occurred_at: days(12), created_by: null, source: 'manual' },
-  { id: 'a7', contact_id: 'c3', deal_id: 'd2', type: 'whatsapp', direction: 'in', summary: 'سألت عن دورة المحتوى بعد ما شافت الإعلان', body: null, occurred_at: days(4), created_by: null, source: 'bot' },
-  { id: 'a8', contact_id: 'c3', deal_id: 'd2', type: 'whatsapp', direction: 'out', summary: 'البوت بعتلها الموعد والسعر', body: null, occurred_at: hours(20), created_by: null, source: 'bot' },
-  { id: 'a9', contact_id: 'c6', deal_id: 'd9', type: 'call', direction: 'out', summary: 'مكالمة تعارف — بدها تجربة أسبوعين', body: null, occurred_at: days(6), created_by: 'u1', source: 'manual' },
-  { id: 'a10', contact_id: 'c4', deal_id: 'd10', type: 'whatsapp', direction: 'out', summary: 'بعتنا عرض السعر لمجيب', body: null, occurred_at: hours(60), created_by: 'u1', source: 'manual' },
-  { id: 'a11', contact_id: 'c9', deal_id: 'd4', type: 'whatsapp', direction: 'in', summary: 'وافق على التسجيل بالدورة', body: null, occurred_at: hours(30), created_by: null, source: 'bot' },
-  { id: 'a12', contact_id: 'c5', deal_id: 'd7', type: 'note', direction: 'none', summary: 'اعتذرت عن الدورة — السعر', body: 'قالت ممكن ترجع بالدورة الجاي.', occurred_at: days(3), created_by: 'u2', source: 'manual' },
+  { id: 'a4', contact_id: 'c1', deal_id: 'd1', type: 'call', direction: 'out', summary: 'تحدّثت معه، وأفاد بأنه سيحوّل المبلغ هذا الأسبوع', body: 'مشغول بالعمل، ووعد بالتحويل يوم الخميس.', occurred_at: hours(74), created_by: 'u2', source: 'manual' },
+  { id: 'a5', contact_id: 'c2', deal_id: 'd8', type: 'meeting', direction: 'none', summary: 'اجتماع بالعيادة — عرضنا سمارت كلينيك', body: 'أعجبه نظام الحجوزات، واستفسر عن الدعم الفني.', occurred_at: days(20), created_by: 'u2', source: 'manual' },
+  { id: 'a6', contact_id: 'c2', deal_id: 'd8', type: 'system', direction: 'none', summary: 'انتقلت الصفقة تلقائياً إلى مرحلة «تعاقد» بعد تأكيد الدفع', body: null, occurred_at: days(12), created_by: null, source: 'manual' },
+  { id: 'a7', contact_id: 'c3', deal_id: 'd2', type: 'whatsapp', direction: 'in', summary: 'استفسرت عن دورة المحتوى بعد مشاهدتها الإعلان', body: null, occurred_at: days(4), created_by: null, source: 'bot' },
+  { id: 'a8', contact_id: 'c3', deal_id: 'd2', type: 'whatsapp', direction: 'out', summary: 'أرسل البوت إليها الموعد والسعر', body: null, occurred_at: hours(20), created_by: null, source: 'bot' },
+  { id: 'a9', contact_id: 'c6', deal_id: 'd9', type: 'call', direction: 'out', summary: 'مكالمة تعارف؛ طلبت فترة تجربة لأسبوعين', body: null, occurred_at: days(6), created_by: 'u1', source: 'manual' },
+  { id: 'a10', contact_id: 'c4', deal_id: 'd10', type: 'whatsapp', direction: 'out', summary: 'أرسلنا عرض السعر لـ Mojeeb', body: null, occurred_at: hours(60), created_by: 'u1', source: 'manual' },
+  { id: 'a11', contact_id: 'c9', deal_id: 'd4', type: 'whatsapp', direction: 'in', summary: 'وافق على التسجيل في الدورة', body: null, occurred_at: hours(30), created_by: null, source: 'bot' },
+  { id: 'a12', contact_id: 'c5', deal_id: 'd7', type: 'note', direction: 'none', summary: 'اعتذرت عن التسجيل بسبب السعر', body: 'أشارت إلى إمكانية التسجيل في الدورة القادمة.', occurred_at: days(3), created_by: 'u2', source: 'manual' },
 ]
 
 export const tasks: Task[] = [
   { id: 'k1', title: 'ذكّر أحمد بالتحويل', deal_id: 'd1', contact_id: 'c1', due_at: hours(26), assigned_to: 'u2', status: 'open', completed_at: null },
   { id: 'k2', title: 'أول تواصل', deal_id: 'd3', contact_id: 'c7', due_at: hours(3), assigned_to: 'u3', status: 'open', completed_at: null },
-  { id: 'k3', title: 'ابعت رابط الدورة لخالد', deal_id: 'd4', contact_id: 'c9', due_at: inDays(0.2), assigned_to: 'u2', status: 'open', completed_at: null },
+  { id: 'k3', title: 'أرسل رابط الدورة إلى خالد', deal_id: 'd4', contact_id: 'c9', due_at: inDays(0.2), assigned_to: 'u2', status: 'open', completed_at: null },
   { id: 'k4', title: 'تابع تجربة عيادة الشفاء', deal_id: 'd9', contact_id: 'c6', due_at: inDays(0.4), assigned_to: 'u1', status: 'open', completed_at: null },
   { id: 'k5', title: 'اتصل بمحمد بخصوص عرض مجيب', deal_id: 'd10', contact_id: 'c4', due_at: hours(50), assigned_to: 'u1', status: 'open', completed_at: null },
   { id: 'k6', title: 'أول تواصل', deal_id: 'd12', contact_id: 'c8', due_at: inDays(0.8), assigned_to: 'u2', status: 'open', completed_at: null },
-  { id: 'k7', title: 'أرسل شهادة الحضور لسلمى', deal_id: 'd6', contact_id: 'c8', due_at: days(2), assigned_to: 'u2', status: 'done', completed_at: days(2) },
+  { id: 'k7', title: 'أرسل شهادة الحضور إلى سلمى', deal_id: 'd6', contact_id: 'c8', due_at: days(2), assigned_to: 'u2', status: 'done', completed_at: days(2) },
 ]
 
 export const payments: Payment[] = [

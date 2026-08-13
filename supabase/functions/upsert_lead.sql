@@ -227,7 +227,7 @@ begin
         'other',
         v_payment_status,
         case when v_payment_status = 'paid' then now() else null end,
-        'سُجّلت من البوت'
+        'سُجّلت عبر البوت'
       );
     end if;
   end if;

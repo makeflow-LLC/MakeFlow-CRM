@@ -21,17 +21,55 @@
   }
 
   html {
-    /* الأرقام لاتينية دايماً (1234) مش هندية (١٢٣٤) */
+    /* الأرقام لاتينية دائماً (1234) لا هندية (١٢٣٤) */
     font-feature-settings: 'lnum' 1;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-page text-ink antialiased;
     font-variant-numeric: lining-nums;
+
+    /* الحرف العربي أعرض وأكثر تفصيلاً من اللاتيني، فيحتاج قياساً أكبر قليلاً
+       ومسافة سطر أوسع ليبقى مقروءاً في الجداول والفقرات الطويلة. */
+    font-size: 15px;
+    line-height: 1.75;
+
+    /* التباعد بين الحروف يكسر اتصال الحرف العربي — يُمنع منعاً باتاً. */
+    letter-spacing: 0;
+
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* الأرقام والحقول الرقمية والتواريخ بتضل LTR جوّا نص عربي */
+  /* لا نسمح للمتصفح باصطناع وزن أو ميل غير موجود في الخط — الاصطناع يشوّه
+     الحرف العربي بشكل واضح. */
+  * {
+    font-synthesis: none;
+  }
+
+  /* العناوين أكثف سطراً من النص الجاري، وتُكسر كسراً متوازناً. */
+  h1, h2, h3, h4 {
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* الأرقام والتواريخ والهواتف تبقى بترتيبها اللاتيني داخل النص العربي.
+     بدون هذا العزل يقفز الرمز «+» إلى آخر الرقم ويصبح 970599… خاطئاً. */
   .num {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+  }
+
+  /* النص اللاتيني داخل جملة عربية (أسماء المنتجات مثل SmartClinic) يبقى
+     بالاتجاه الصحيح دون أن يقلب ترتيب الجملة حوله. */
+  .ltr {
     direction: ltr;
     unicode-bidi: isolate;
     display: inline-block;

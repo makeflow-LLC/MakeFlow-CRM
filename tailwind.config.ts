@@ -70,7 +70,12 @@ const config: Config = {
       },
 
       fontFamily: {
-        sans: ['var(--font-arabic)', 'Tajawal', 'system-ui', 'sans-serif'],
+        sans: [
+          'var(--font-arabic)',
+          'var(--font-arabic-fallback)',
+          'system-ui',
+          'sans-serif',
+        ],
       },
 
       minHeight: {

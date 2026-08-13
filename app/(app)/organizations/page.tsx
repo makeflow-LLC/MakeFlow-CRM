@@ -49,7 +49,7 @@ export default async function OrganizationsPage() {
                     <span className="num font-bold text-ink">{formatNumber(org.people.length)}</span> أشخاص
                   </span>
                   <span className="text-ink-muted">
-                    <span className="num font-bold text-ink">{formatNumber(org.deals.length)}</span> صفقات
+                    <span className="num font-bold text-ink">{formatNumber(org.deals.length)}</span> صفقة
                   </span>
                   {org.mrr > 0 && (
                     <span className="me-auto font-bold text-success">

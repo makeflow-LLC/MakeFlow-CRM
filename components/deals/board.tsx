@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/hints/empty-state'
+import { Toast } from '@/components/ui/toast'
 import { OwnerAvatar, ProductPill, StuckBadge } from '@/components/shared/bits'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
@@ -35,6 +36,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
   const [pendingLoss, setPendingLoss] = useState<{ deal: DealCard; stage: Stage } | null>(null)
   const [lostReason, setLostReason] = useState('')
   const [reasonTouched, setReasonTouched] = useState(false)
+  const [toast, setToast] = useState('')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -58,10 +60,10 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
         .update({ stage_id: stageId, ...(reason ? { lost_reason: reason } : {}) })
         .eq('id', dealId)
       if (error) throw error
-    } catch (e) {
-      // رجّع البطاقة لمكانها الأصلي إذا الحفظ فشل
+    } catch {
+      // تعود البطاقة إلى مكانها الأصلي إن فشل الحفظ
       setDeals(initial)
-      alert(microcopy.errors.saveFailed)
+      setToast(microcopy.errors.saveFailed)
     }
   }
 
@@ -94,7 +96,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
     const stage = stages.find((s) => s.id === stageId)
     if (!deal || !stage || deal.stage_id === stage.id) return
 
-    // القاعدة: ما بتقدر تخسر صفقة بدون ما تقول ليش
+    // القاعدة: ما يمكنك تخسر صفقة بدون ما تقول ليش
     if (stage.is_lost) {
       setPendingLoss({ deal, stage })
       setLostReason('')
@@ -129,7 +131,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
           onChange={(e) => setProductFilter(e.target.value)}
           className="h-10 rounded-input border border-line bg-card px-3 text-sm font-semibold text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
         >
-          <option value="">كل المنتجات</option>
+          <option value="">جميع المنتجات</option>
           {products.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
@@ -140,7 +142,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
           onChange={(e) => setOwnerFilter(e.target.value)}
           className="h-10 rounded-input border border-line bg-card px-3 text-sm font-semibold text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
         >
-          <option value="">كل المسؤولين</option>
+          <option value="">جميع المسؤولين</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>{u.full_name}</option>
           ))}
@@ -155,7 +157,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
               setOwnerFilter('')
             }}
           >
-            امسح الفلاتر
+            {microcopy.buttons.clearFilters}
           </Button>
         )}
 
@@ -170,6 +172,8 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
           {stages.map((stage) => (
             <Column key={stage.id} stage={stage} deals={visible.filter((d) => d.stage_id === stage.id)} />
           ))}
+          {/* حشوة نهاية البورد: تمنع قصّ آخر عمود عند أقصى التمرير */}
+          <div className="hidden w-2 shrink-0 md:block" aria-hidden />
         </div>
 
         <DragOverlay dropAnimation={null}>
@@ -194,7 +198,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
               autoFocus
               value={lostReason}
               onChange={(e) => setLostReason(e.target.value)}
-              placeholder="مثلاً: السعر غالي عليه هالفترة"
+              placeholder="مثال: السعر مرتفع بالنسبة له في هذه الفترة"
             />
             {reasonTouched && !lostReason.trim() && (
               <p className="text-xs font-medium text-danger">{microcopy.errors.lostReasonRequired}</p>
@@ -211,7 +215,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
                 setPendingLoss(null)
               }}
             >
-              احفظ وانقلها
+              احفظ وانقل الصفقة
             </Button>
             <Button variant="ghost" onClick={() => setPendingLoss(null)}>
               {microcopy.buttons.cancel}
@@ -219,6 +223,8 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
           </div>
         </DialogContent>
       </Dialog>
+
+      {toast && <Toast message={toast} onClose={() => setToast('')} />}
     </>
   )
 }
@@ -251,7 +257,7 @@ function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
 
         {!deals.length && (
           <p className="rounded-card border border-dashed border-line py-6 text-center text-xs text-ink-muted">
-            اسحب صفقة لهون
+            اسحب صفقة إلى هنا
           </p>
         )}
       </div>
@@ -290,7 +296,7 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
         <span className="num text-sm font-bold text-ink">{formatMoney(deal.value, deal.currency)}</span>
         {deal.paid_total > 0 && deal.paid_total < deal.value && (
           <span className="text-[11px] font-semibold text-success">
-            مدفوع <span className="num">{formatMoney(deal.paid_total)}</span>
+            المسدَّد <span className="num">{formatMoney(deal.paid_total)}</span>
           </span>
         )}
       </div>

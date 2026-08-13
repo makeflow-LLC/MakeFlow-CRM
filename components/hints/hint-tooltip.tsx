@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'
 /**
  * الطبقة 2 من نظام التلميحات.
  *
- * أيقونة ⓘ جنب أي مصطلح مش واضح. بتفتح بالحَوَم على الكمبيوتر وبالضغط على
- * الموبايل — لأن مستخدمينا أول مرة بيستعملوا CRM، ولازم يلاقوا الشرح بأي
+ * أيقونة ⓘ جنب أي مصطلح غير واضح. بتفتح بالحَوَم على الكمبيوتر وبالضغط على
+ * الموبايل — لأن مستخدمينا أول مرة بيستعملوا CRM، ولازم يلاقوا الشسـبأي
  * طريقة جرّبوها.
  */
 export function HintTooltip({ term, className }: { term: TermKey; className?: string }) {
@@ -23,7 +23,7 @@ export function HintTooltip({ term, className }: { term: TermKey; className?: st
       <Popover.Trigger asChild>
         <button
           type="button"
-          aria-label={`شو يعني ${hint.title}؟`}
+          aria-label={`ما معنى ${hint.title}؟`}
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
           onClick={(e) => {
@@ -62,7 +62,7 @@ export function HintTooltip({ term, className }: { term: TermKey; className?: st
   )
 }
 
-/** عنوان صغير + أيقونة شرح — بنستعملها بترويسات الجداول والأقسام */
+/** عنوان صغير + أيقونة شسـ— بنستعملها بترويسات الجداول والأقسام */
 export function LabelWithHint({
   children,
   term,

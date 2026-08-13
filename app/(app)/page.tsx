@@ -86,7 +86,7 @@ export default async function TodayPage() {
 
           {/* 3. صفقات عالقة */}
           <section>
-            <SectionHeader title="صفقات عالقة" term="stuckSince" count={stuck.length} />
+            <SectionHeader title="صفقات متوقفة" term="stuckSince" count={stuck.length} />
             {stuck.length ? (
               <Card className="divide-y divide-line overflow-hidden">
                 {stuck.map((d) => (
@@ -122,7 +122,7 @@ export default async function TodayPage() {
 
           {/* 4. دفعات تحتاج تحقق */}
           <section>
-            <SectionHeader title="دفعات تحتاج تحقق" term="needsChecking" count={needsChecking.length} />
+            <SectionHeader title="دفعات بانتظار التحقق" term="needsChecking" count={needsChecking.length} />
             {needsChecking.length ? (
               <Card className="divide-y divide-line overflow-hidden">
                 {needsChecking.map((p) => (
@@ -136,7 +136,7 @@ export default async function TodayPage() {
                     </div>
                     <span className="num text-sm font-bold text-ink">{formatMoney(p.amount, p.currency)}</span>
                     <Button asChild size="sm" variant="soft">
-                      <Link href="/payments">افحص الإيصال</Link>
+                      <Link href="/payments">راجع الإيصال</Link>
                     </Button>
                   </div>
                 ))}
@@ -162,7 +162,7 @@ function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: boolean
   return (
     <div
       className={
-        // الحد على بداية السطر — بالعربي هاد اليمين، وبينعكس لحاله بالإنجليزي
+        // الحد على بداية السطر — بالعربي هذا اليمين، وينعكس لحاله بالإنجليزي
         overdue
           ? 'row flex flex-wrap items-center gap-4 border-s-4 border-s-danger bg-danger/[0.03] px-6 py-3'
           : 'row flex flex-wrap items-center gap-4 px-6 py-3'
@@ -181,7 +181,7 @@ function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: boolean
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-ink">{task.title}</p>
         <p className="truncate text-xs text-ink-muted">
-          {task.contact ? task.contact.full_name : 'بدون شخص محدد'}
+          {task.contact ? task.contact.full_name : 'غير مرتبطة بشخص'}
           {' · '}
           <span className={overdue ? 'font-semibold text-danger' : ''}>{timeAgo(task.due_at)}</span>
         </p>
@@ -189,7 +189,7 @@ function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: boolean
 
       {task.contact && (
         <Button asChild size="sm" variant="outline">
-          <Link href={`/contacts/${task.contact.id}`}>افتح ملفه</Link>
+          <Link href={`/contacts/${task.contact.id}`}>افتح الملف</Link>
         </Button>
       )}
     </div>

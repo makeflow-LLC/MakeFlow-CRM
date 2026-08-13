@@ -1,8 +1,8 @@
 /**
  * طبقة البيانات.
  *
- * فيها مسار كود واحد بس: بنجيب الجداول الخام (من Supabase أو من البيانات
- * التجريبية) وبعدين بنركّب الشاشات منها بدوال صافية تحت. حجم الشغل هون
+ * فيها مسار كود واحد بس: نجلب الجداول الخام (من Supabase أو من البيانات
+ * التجريبية) وبعدين نركّب الشاشات منها بدوال صافية تحت. حجم الشغل هنا
  * صغير — 3 مستخدمين وبضع مئات الصفوف — فجلب الجداول كاملة أبسط وأوضح من
  * عشرين استعلام، وبيخلي نفس المنطق يشتغل بالوضعين بدون تكرار.
  */
@@ -51,7 +51,7 @@ const mockDataset = (): Dataset => ({
   subscriptions: mock.subscriptions,
 })
 
-/** `cache` بتخلي الطلب الواحد يجيب البيانات مرة وحدة مهما تعددت الكمبوننتس. */
+/** `cache` تجعل الطلب الواحد يجيب البيانات مرة وحدة مهما تعددت الكمبوننتس. */
 export const getDataset = cache(async (): Promise<Dataset> => {
   if (!isLive()) return mockDataset()
 
@@ -138,7 +138,7 @@ export function buildContactRows(data: Dataset, query = ''): ContactRow[] {
   return data.contacts
     .filter((c) => {
       if (!q) return true
-      // الرقم بيتقارن بدون رموز عشان «0599» تلاقي «+970599...»
+      // الرقم بيتقارن بدون رموز حتى «0599» تلاقي «+970599...»
       const digits = q.replace(/\D/g, '')
       return (
         c.full_name.toLowerCase().includes(q) ||

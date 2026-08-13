@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
  * الطبقة 3 من نظام التلميحات.
  *
  * ممنوع تظهر شاشة فاضية بتحكي «لا توجد بيانات». كل حالة فاضية = أيقونة +
- * سطر بيشرح شو المفروض يظهر هون + زر بيعمل الإشي.
+ * سطر بيشسـما المفروض يظهر هنا + زر بيعمل الشيء.
  */
 export function EmptyState({
   icon,
@@ -18,7 +18,7 @@ export function EmptyState({
   title: string
   body: string
   action?: React.ReactNode
-  /** `done` = خلّصت شغلك، مش نقص بيانات */
+  /** `done` = خلّصت شغلك، ليس نقص بيانات */
   tone?: 'empty' | 'done'
   className?: string
 }) {
