@@ -30,7 +30,23 @@ export interface Dataset {
   subscriptions: Subscription[]
 }
 
-/** بنكون «حيّ» بس لما مفاتيح Supabase موجودة — غير هيك بيانات تجريبية. */
+/**
+ * وضع مصدر البيانات:
+ *   demo  — لا مفاتيح: بيانات تجريبية للمعاينة
+ *   live  — متصل بقاعدة البيانات فعلاً
+ *   error — المفاتيح موجودة لكن الاتصال فشل
+ */
+export type DataMode = 'demo' | 'live' | 'error'
+
+let lastMode: DataMode = 'demo'
+let lastError = ''
+
+/** الوضع الفعلي بعد آخر محاولة جلب — يُقرأ بعد getDataset. */
+export function dataMode(): { mode: DataMode; error: string } {
+  return { mode: lastMode, error: lastError }
+}
+
+/** المفاتيح موجودة؟ لا يعني بالضرورة أن الاتصال ناجح. */
 export function isLive(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -52,8 +68,17 @@ const mockDataset = (): Dataset => ({
 })
 
 /** `cache` تجعل الطلب الواحد يجيب البيانات مرة وحدة مهما تعددت الكمبوننتس. */
+const emptyDataset = (): Dataset => ({
+  users: [], products: [], pipelines: [], stages: [], organizations: [],
+  contacts: [], deals: [], activities: [], tasks: [], payments: [], subscriptions: [],
+})
+
 export const getDataset = cache(async (): Promise<Dataset> => {
-  if (!isLive()) return mockDataset()
+  if (!isLive()) {
+    lastMode = 'demo'
+    lastError = ''
+    return mockDataset()
+  }
 
   const { createClient } = await import('@/lib/supabase/server')
   const db = createClient()
@@ -67,10 +92,17 @@ export const getDataset = cache(async (): Promise<Dataset> => {
 
   const failed = results.find((r) => r.error)
   if (failed?.error) {
-    // ما بنكسر الشاشة — بنرجع للبيانات التجريبية وبنسجّل السبب بالـ server log
-    console.error('[data] فشل جلب البيانات من Supabase:', failed.error.message)
-    return mockDataset()
+    // لا نعرض بيانات تجريبية هنا أبداً: المستخدم ضبط المفاتيح فهو يتوقّع بياناته
+    // الحقيقية، وعرض بيانات مختلَقة مكانها يجعله يثق بأرقام ليست له. نعيد جداول
+    // فارغة ونصرّح بالعطل في الواجهة.
+    console.error('[data] تعذّر جلب البيانات من Supabase:', failed.error.message)
+    lastMode = 'error'
+    lastError = failed.error.message
+    return emptyDataset()
   }
+
+  lastMode = 'live'
+  lastError = ''
 
   const [
     users, products, pipelines, stages, organizations,
