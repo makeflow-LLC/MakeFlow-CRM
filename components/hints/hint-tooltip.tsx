@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils'
 /**
  * الطبقة 2 من نظام التلميحات.
  *
- * أيقونة ⓘ جنب أي مصطلح غير واضح. بتفتح بالحَوَم على الكمبيوتر وبالضغط على
- * الموبايل — لأن مستخدمينا أول مرة بيستعملوا CRM، ولازم يلاقوا الشسـبأي
- * طريقة جرّبوها.
+ * أيقونة ⓘ بجانب أي مصطلح غير واضح. تُفتح بمرور المؤشر على الحاسوب وبالنقر
+ * على الهاتف، لأن المستخدمين يتعاملون مع نظام CRM لأول مرة، فينبغي أن يجدوا
+ * الشرح بأي طريقة جرّبوها.
  */
 export function HintTooltip({ term, className }: { term: TermKey; className?: string }) {
   const [open, setOpen] = useState(false)
@@ -62,7 +62,7 @@ export function HintTooltip({ term, className }: { term: TermKey; className?: st
   )
 }
 
-/** عنوان صغير + أيقونة شسـ— بنستعملها بترويسات الجداول والأقسام */
+/** عنوان صغير مع أيقونة شرح — تُستعمل في ترويسات الجداول والأقسام */
 export function LabelWithHint({
   children,
   term,

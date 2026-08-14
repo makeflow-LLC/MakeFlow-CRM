@@ -48,7 +48,7 @@ export function ImportWizard({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    // اسم لاتيني: أسماء الملفات العربية تتحوّل إلى رموز ليسوّهة على بعض الأنظمة
+    // اسم لاتيني: أسماء الملفات العربية تتحوّل إلى رموز مشوّهة على بعض الأنظمة
     a.download = 'makeflow-contacts-template.xlsx'
     document.body.appendChild(a)
     a.click()

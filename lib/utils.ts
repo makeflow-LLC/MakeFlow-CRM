@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** الأرقام لاتينية دايماً، وبفواصل آلاف — 1,250 ليس ١٢٥٠ */
+/** الأرقام لاتينية دائماً، وبفواصل آلاف — 1,250 ليس ١٢٥٠ */
 export function formatNumber(n: number): string {
   return new Intl.NumberFormat('en-US').format(n)
 }

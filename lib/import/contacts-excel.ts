@@ -2,7 +2,7 @@
  * استيراد جهات الاتصال من Excel.
  *
  * القالب والقارئ معرَّفان هنا معاً عن قصد: أي تعديل على الأعمدة يجب أن يطال
- * التوليد والقراءة في الوقت نفسه، وإبقاؤهلا يوجد ملف واحد يمنع انحرافهما.
+ * التوليد والقراءة في الوقت نفسه، وإبقاؤهما في ملف واحد يمنع انحرافهما.
  *
  * ExcelJS يُحمَّل عند الطلب فقط (dynamic import) حتى لا يدخل في حزمة الصفحات
  * التي لا تستورد شيئاً.
@@ -117,7 +117,7 @@ export async function buildTemplate(): Promise<Blob> {
 
   // الصف 1: الترويسة
   ws.addRow(TEMPLATE_COLUMNS.map((c) => c.header))
-  // الصف 2: شسـكل عمود
+  // الصف 2: شرح لكل عمود
   ws.addRow(TEMPLATE_COLUMNS.map((c) => c.hint))
   // الصف 3: مثال
   ws.addRow(SAMPLE_ROW)
@@ -228,7 +228,7 @@ export async function parseContactsFile(
       raw[field] = cellText(row.getCell(col).value)
     })
 
-    // نتخطّى صف الشسـوصف المثال الموجودين في القالب
+    // نتخطّى صف الشرح وصف المثال الموجودين في القالب
     if (raw.full_name === 'الاسم الكامل' || raw.full_name.startsWith('إلزامي')) return
     if (raw.full_name === SAMPLE_ROW[0] && raw.phone === SAMPLE_ROW[1]) return
 

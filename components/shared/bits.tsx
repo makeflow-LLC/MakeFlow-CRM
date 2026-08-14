@@ -63,7 +63,7 @@ export function BotBadge() {
   )
 }
 
-/** بطاقة رقم بالأعلى — العنوان فيه أيقونة شسـلما المصطلح غير واضح */
+/** بطاقة رقم بالأعلى — العنوان فيه أيقونة شرح حين لا يكون المصطلح واضحاً */
 export function StatCard({
   label, value, term, tone = 'default', suffix,
 }: {
