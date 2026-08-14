@@ -60,6 +60,7 @@ exception when duplicate_object then null; end $$;
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at := now();
@@ -144,6 +145,10 @@ begin
   return (select u.id from public.users u where u.auth_user_id = v_auth_uid limit 1);
 end;
 $$;
+
+-- Internal helper used by policies, not a public REST endpoint.
+revoke all on function public.current_staff_id() from public, anon;
+grant execute on function public.current_staff_id() to authenticated, service_role;
 
 -- =============================================================================
 -- organizations
@@ -452,7 +457,7 @@ create unique index if not exists activities_external_ref_unique_idx
   on public.activities (external_ref) where external_ref is not null;
 
 -- =============================================================================
--- tasks — "the next step", the thing the داشبورد nags about
+-- tasks — "the next step", the thing the daily dashboard nags about
 -- =============================================================================
 
 create table if not exists public.tasks (

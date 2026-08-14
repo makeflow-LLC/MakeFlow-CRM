@@ -246,10 +246,12 @@ comment on function public.upsert_lead is
   'n8n entry point. Idempotent on (phone, product): finds or creates the contact, '
   'the organization, and the open deal; logs a bot activity; records a payment row.';
 
+-- n8n only. Staff go through the interface, so `authenticated` has no reason to
+-- reach a SECURITY DEFINER function that writes contacts, deals and payments.
 revoke all on function public.upsert_lead(
   text, text, text, text, text, text, text, numeric, text
-) from public, anon;
+) from public, anon, authenticated;
 
 grant execute on function public.upsert_lead(
   text, text, text, text, text, text, text, numeric, text
-) to service_role, authenticated;
+) to service_role;
