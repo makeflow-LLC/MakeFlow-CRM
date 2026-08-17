@@ -132,16 +132,21 @@ begin
     if v_auth_id is null then
       v_auth_id := gen_random_uuid();
 
+      -- الأعمدة الأربعة الأخيرة ليس لها قيمة افتراضية في auth.users، وتركها NULL
+      -- يجعل خدمة المصادقة تفشل في قراءة الصف فترفض الدخول برسالة «بيانات غير
+      -- صحيحة» رغم صحة كلمة المرور. لذلك تُضبط سلاسلَ فارغة صراحةً.
       insert into auth.users (
         instance_id, id, aud, role, email, encrypted_password,
         email_confirmed_at, created_at, updated_at,
-        raw_app_meta_data, raw_user_meta_data
+        raw_app_meta_data, raw_user_meta_data,
+        confirmation_token, recovery_token, email_change, email_change_token_new
       ) values (
         '00000000-0000-0000-0000-000000000000', v_auth_id, 'authenticated', 'authenticated',
         v_staff.email, crypt(v_password, gen_salt('bf')),
         now(), now(), now(),
         '{"provider":"email","providers":["email"]}'::jsonb,
-        jsonb_build_object('staff_id', v_staff.staff_id)
+        jsonb_build_object('staff_id', v_staff.staff_id),
+        '', '', '', ''
       );
 
       insert into auth.identities (
