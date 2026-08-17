@@ -5,7 +5,7 @@ import { PageHeader, SectionHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/input'
+import { LogActivity } from '@/components/contacts/log-activity'
 import { Avatar } from '@/components/ui/avatar'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import {
@@ -13,7 +13,7 @@ import {
 } from '@/components/shared/bits'
 import { buildContact360, getDataset } from '@/lib/data'
 import { STUCK_HOURS } from '@/lib/constants'
-import { emptyStates, microcopy, pageHints } from '@/lib/hints'
+import { emptyStates, pageHints } from '@/lib/hints'
 import { formatDate, formatMoney, timeAgo } from '@/lib/utils'
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -164,9 +164,8 @@ export default async function ContactPage({ params }: { params: { id: string } }
           </div>
 
           {/* صندوق تسجيل النشاط — ملاصق لتحت */}
-          <div className="sticky bottom-0 space-y-2 rounded-b-card border-t border-line bg-card p-4">
-            <Textarea rows={2} placeholder="ما الذي جرى مع هذا العميل؟ دوّنه هنا حتى لا يُنسى…" />
-            <Button size="sm">{microcopy.buttons.addActivity}</Button>
+          <div className="sticky bottom-0 rounded-b-card border-t border-line bg-card p-4">
+            <LogActivity contactId={contact.id} />
           </div>
         </Card>
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -10,6 +11,7 @@ import { FieldError, Input, Label, Textarea } from '@/components/ui/input'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { microcopy } from '@/lib/hints'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
+import { createActivity, createContact, createDeal } from '@/lib/actions'
 import type { Contact, Product } from '@/lib/types'
 
 /**
@@ -62,21 +64,29 @@ export function QuickAdd({ contacts, products }: { contacts: Contact[]; products
   )
 }
 
-/** رسالة تظهر بعد الحفظ بوضع المعاينة */
-function DemoNote() {
+/** نتيجة الحفظ: نجاح أخضر أو سبب الفشل بالأحمر */
+function Result({ ok, message }: { ok: boolean; message: string }) {
   return (
-    <p className="rounded-input bg-accent-soft p-3 text-xs leading-relaxed text-accent">
-      {microcopy.demoNote}
+    <p
+      className={
+        ok
+          ? 'rounded-input bg-success/10 p-3 text-xs font-semibold leading-relaxed text-success'
+          : 'rounded-input bg-danger/10 p-3 text-xs font-semibold leading-relaxed text-danger'
+      }
+    >
+      {message}
     </p>
   )
 }
 
 function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => void }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [touched, setTouched] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   // بندوّر على الرقم وقت الكتابة — قبل ما يضغط حفظ
   const duplicate = useMemo(() => {
@@ -94,8 +104,19 @@ function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => 
       onSubmit={(e) => {
         e.preventDefault()
         setTouched(true)
+        setResult(null)
         if (!name.trim() || !isValidPhone(phone) || duplicate) return
-        setSaved(true)
+
+        startTransition(async () => {
+          const res = await createContact({ full_name: name, phone, city })
+          if (res.ok) {
+            setResult({ ok: true, message: `أُضيف ${name.trim()} بنجاح.` })
+            setName(''); setPhone(''); setCity(''); setTouched(false)
+            router.refresh()
+          } else {
+            setResult({ ok: false, message: res.error ?? '' })
+          }
+        })
       }}
     >
       <div className="space-y-1">
@@ -135,10 +156,12 @@ function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => 
         <Input id="qa-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="غزة" />
       </div>
 
-      {saved && <DemoNote />}
+      {result && <Result ok={result.ok} message={result.message} />}
 
       <div className="flex justify-start gap-2">
-        <Button type="submit" disabled={Boolean(duplicate)}>{microcopy.buttons.addContact}</Button>
+        <Button type="submit" disabled={Boolean(duplicate) || pending}>
+          {pending ? 'جارٍ الحفظ…' : microcopy.buttons.addContact}
+        </Button>
         <Button type="button" variant="ghost" onClick={onDone}>{microcopy.buttons.cancel}</Button>
       </div>
     </form>
@@ -148,11 +171,13 @@ function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => 
 function DealForm({
   contacts, products, onDone,
 }: { contacts: Contact[]; products: Product[]; onDone: () => void }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
   const [contactId, setContactId] = useState('')
   const [productId, setProductId] = useState('')
   const [value, setValue] = useState('')
   const [touched, setTouched] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   const valueError = touched && value && Number.isNaN(Number(value)) ? microcopy.errors.valueNumber : ''
   const productError = touched && !productId ? microcopy.errors.productRequired : ''
@@ -163,8 +188,23 @@ function DealForm({
       onSubmit={(e) => {
         e.preventDefault()
         setTouched(true)
+        setResult(null)
         if (!contactId || !productId || Number.isNaN(Number(value))) return
-        setSaved(true)
+
+        startTransition(async () => {
+          const res = await createDeal({
+            contact_id: contactId,
+            product_id: productId,
+            value: value ? Number(value) : undefined,
+          })
+          if (res.ok) {
+            setResult({ ok: true, message: 'أُضيفت الصفقة، وتجدها الآن في أول مرحلة على اللوحة.' })
+            setContactId(''); setProductId(''); setValue(''); setTouched(false)
+            router.refresh()
+          } else {
+            setResult({ ok: false, message: res.error ?? '' })
+          }
+        })
       }}
     >
       <div className="space-y-1">
@@ -218,10 +258,12 @@ function DealForm({
         <FieldError>{valueError}</FieldError>
       </div>
 
-      {saved && <DemoNote />}
+      {result && <Result ok={result.ok} message={result.message} />}
 
       <div className="flex justify-start gap-2">
-        <Button type="submit">{microcopy.buttons.addDeal}</Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'جارٍ الحفظ…' : microcopy.buttons.addDeal}
+        </Button>
         <Button type="button" variant="ghost" onClick={onDone}>{microcopy.buttons.cancel}</Button>
       </div>
     </form>
@@ -229,18 +271,35 @@ function DealForm({
 }
 
 function ActivityForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => void }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
   const [contactId, setContactId] = useState('')
   const [type, setType] = useState('whatsapp')
   const [summary, setSummary] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   return (
     <form
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault()
+        setResult(null)
         if (!contactId || !summary.trim()) return
-        setSaved(true)
+
+        startTransition(async () => {
+          const res = await createActivity({
+            contact_id: contactId,
+            summary,
+            type: type as 'whatsapp' | 'call' | 'meeting' | 'note',
+          })
+          if (res.ok) {
+            setResult({ ok: true, message: 'سُجّل النشاط في ملف العميل.' })
+            setSummary('')
+            router.refresh()
+          } else {
+            setResult({ ok: false, message: res.error ?? '' })
+          }
+        })
       }}
     >
       <div className="space-y-1">
@@ -287,10 +346,12 @@ function ActivityForm({ contacts, onDone }: { contacts: Contact[]; onDone: () =>
         />
       </div>
 
-      {saved && <DemoNote />}
+      {result && <Result ok={result.ok} message={result.message} />}
 
       <div className="flex justify-start gap-2">
-        <Button type="submit">{microcopy.buttons.addActivity}</Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? 'جارٍ الحفظ…' : microcopy.buttons.addActivity}
+        </Button>
         <Button type="button" variant="ghost" onClick={onDone}>{microcopy.buttons.cancel}</Button>
       </div>
     </form>

@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { AddOrganization } from '@/components/organizations/add-organization'
 import { buildOrganizationCards, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
 import { formatMoney, formatNumber } from '@/lib/utils'
@@ -23,7 +24,12 @@ export default async function OrganizationsPage() {
 
   return (
     <>
-      <PageHeader title="الجهات" hint={pageHints.organizations} term="organization" />
+      <PageHeader
+        title="الجهات"
+        hint={pageHints.organizations}
+        term="organization"
+        action={<AddOrganization />}
+      />
 
       {orgs.length ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -66,7 +72,7 @@ export default async function OrganizationsPage() {
           icon={<Building2 className="h-7 w-7" />}
           title={emptyStates.organizations.title}
           body={emptyStates.organizations.body}
-          action={<Button>{emptyStates.organizations.action}</Button>}
+          action={<AddOrganization label={emptyStates.organizations.action} />}
         />
       )}
     </>
