@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
   BarChart3, Building2, CreditCard, KanbanSquare, MoreHorizontal, Package,
-  PanelRightClose, PanelRightOpen, RefreshCw, Sun, Users,
+  PanelRightClose, PanelRightOpen, RefreshCw, Sun, UserCog, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +19,7 @@ const NAV = [
   { href: '/payments', label: 'المدفوعات', icon: CreditCard },
   { href: '/reports', label: 'التقارير', icon: BarChart3 },
   { href: '/products', label: 'المنتجات', icon: Package },
+  { href: '/team', label: 'الفريق', icon: UserCog },
 ]
 
 export function Sidebar() {
