@@ -11,7 +11,8 @@ import { Toast } from '@/components/ui/toast'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatDate, formatMoney } from '@/lib/utils'
-import type { PaymentRow, PaymentStatus } from '@/lib/types'
+import { AddPayment } from '@/components/payments/add-payment'
+import type { DealCard, PaymentRow, PaymentStatus } from '@/lib/types'
 
 const FILTERS: { key: PaymentStatus | 'all'; label: string }[] = [
   { key: 'needs_checking', label: 'بانتظار التحقق' },
@@ -34,7 +35,13 @@ const STATUS_LABEL: Record<PaymentStatus, string> = {
   refunded: 'مسترجعة',
 }
 
-export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; live: boolean }) {
+export function PaymentsTable({
+  rows: initial, live, deals = [],
+}: {
+  rows: PaymentRow[]
+  live: boolean
+  deals?: DealCard[]
+}) {
   // الفلتر الافتراضي: اللي محتاج شغل منك
   const [filter, setFilter] = useState<PaymentStatus | 'all'>('needs_checking')
   const [rows, setRows] = useState(initial)
@@ -143,6 +150,7 @@ export function PaymentsTable({ rows: initial, live }: { rows: PaymentRow[]; liv
           icon={<Receipt className="h-7 w-7" />}
           title={emptyStates.payments.title}
           body={emptyStates.payments.body}
+          action={deals.length ? <AddPayment deals={deals} variant="soft" /> : undefined}
         />
       )}
 

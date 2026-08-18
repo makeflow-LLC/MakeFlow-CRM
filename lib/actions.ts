@@ -413,6 +413,62 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// دفعة
+// ---------------------------------------------------------------------------
+
+/**
+ * تسجيل دفعة على صفقة.
+ *
+ * نقل البطاقة إلى مرحلة «دفع» لا ينشئ دفعة — المرحلة موقعٌ على المسار،
+ * والدفعة سجلّ مالي له مبلغ وطريقة وتاريخ. هما شيئان مختلفان، والخلط
+ * بينهما يجعل التقارير تقول صفراً بينما المال وصل فعلاً.
+ *
+ * والاتجاه واحد: الدفعة المؤكَّدة هي التي تدفع الصفقة إلى الأمام (قاعدة
+ * في قاعدة البيانات)، لا العكس.
+ */
+export async function createPayment(input: {
+  deal_id: string
+  amount: number
+  method?: 'bank_transfer' | 'cash' | 'wallet' | 'other'
+  status?: 'paid' | 'needs_checking' | 'not_paid'
+  paid_at?: string
+  note?: string
+}): Promise<ActionResult> {
+  const db = createClient()
+
+  if (!input.deal_id) return { ok: false, error: 'اختر الصفقة التي وصلك مقابلها المبلغ.' }
+  if (!(input.amount > 0)) return { ok: false, error: 'أدخل المبلغ بالأرقام.' }
+
+  const { data: deal } = await db
+    .from('deals').select('id, currency, contact_id').eq('id', input.deal_id).maybeSingle()
+  if (!deal) return { ok: false, error: 'لم نعثر على الصفقة.' }
+
+  const status = input.status ?? 'paid'
+  const staff = await currentStaffId(db)
+
+  const { data, error } = await db.from('payments').insert({
+    deal_id: deal.id,
+    amount: input.amount,
+    currency: deal.currency,
+    method: input.method ?? 'bank_transfer',
+    status,
+    // المؤكَّدة يلزمها تاريخ، وإلا ظهرت في التقارير بلا زمن
+    paid_at: status === 'paid' ? (input.paid_at || new Date().toISOString()) : null,
+    verified_by: status === 'paid' ? staff : null,
+    note: input.note?.trim() || null,
+  }).select('id').single()
+
+  if (error) return { ok: false, error: readableError(error.message, 'deal') }
+
+  revalidatePath('/payments')
+  revalidatePath('/deals')
+  revalidatePath('/reports')
+  revalidatePath('/')
+  if (deal.contact_id) revalidatePath(`/contacts/${deal.contact_id}`)
+  return { ok: true, id: data.id }
+}
+
+// ---------------------------------------------------------------------------
 // نشاط
 // ---------------------------------------------------------------------------
 

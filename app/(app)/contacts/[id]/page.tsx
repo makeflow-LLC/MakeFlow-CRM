@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button'
 import { LogActivity } from '@/components/contacts/log-activity'
 import { DeleteContact } from '@/components/contacts/delete-contact'
 import { AddDeal } from '@/components/shared/add-dialogs'
+import { AddReminder } from '@/components/shared/add-reminder'
+import { AddPayment } from '@/components/payments/add-payment'
 import { Avatar } from '@/components/ui/avatar'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import {
   ActivityIcon, BotBadge, OwnerAvatar, ProductPill, StagePill, StuckBadge,
 } from '@/components/shared/bits'
-import { buildContact360, getDataset } from '@/lib/data'
+import { buildContact360, buildDealCards, getDataset } from '@/lib/data'
 import { STUCK_HOURS } from '@/lib/constants'
 import { emptyStates, pageHints } from '@/lib/hints'
 import { formatDate, formatMoney, timeAgo } from '@/lib/utils'
@@ -41,9 +43,16 @@ export default async function ContactPage({ params }: { params: { id: string } }
 
   const { contact, organization, owner, activities, deals, payments, lifetimeValue } = view
 
+  // صفقات هذا الشخص وحدها في قائمة تسجيل الدفعة — لا كل صفقات النظام
+  const contactDeals = buildDealCards(data).filter((d) => d.contact_id === contact.id)
+
   return (
     <>
-      <PageHeader title={contact.full_name} hint={pageHints.contactDetail} />
+      <PageHeader
+        title={contact.full_name}
+        hint={pageHints.contactDetail}
+        action={<AddReminder contacts={[]} presetContactId={contact.id} label="ذكّرني" />}
+      />
 
       {/* يمين: المعلومات · وسط: الخط الزمني · يسار: الصفقات والمدفوعات */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
@@ -241,7 +250,16 @@ export default async function ContactPage({ params }: { params: { id: string } }
 
           {/* المدفوعات */}
           <div>
-            <SectionHeader title="المدفوعات" term="payment" count={payments.length} />
+            <SectionHeader
+              title="المدفوعات"
+              term="payment"
+              count={payments.length}
+              action={
+                contactDeals.length > 0 ? (
+                  <AddPayment deals={contactDeals} variant="soft" label="سجّل دفعة" />
+                ) : undefined
+              }
+            />
             {payments.length ? (
               <Card className="divide-y divide-line overflow-hidden">
                 {payments.map((p) => (

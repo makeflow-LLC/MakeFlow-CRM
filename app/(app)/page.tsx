@@ -5,14 +5,17 @@ import { EmptyState } from '@/components/hints/empty-state'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ActivityIcon, OwnerAvatar, ProductPill, StagePill, StatCard, StuckBadge } from '@/components/shared/bits'
-import { buildQueue, buildStats, getDataset } from '@/lib/data'
+import { TaskRow } from '@/components/shared/task-row'
+import { AddReminder } from '@/components/shared/add-reminder'
+import { AddPayment } from '@/components/payments/add-payment'
+import { buildDealCards, buildQueue, buildStats, getDataset } from '@/lib/data'
 import { doneStates, pageHints } from '@/lib/hints'
 import { formatMoney, timeAgo } from '@/lib/utils'
-import type { QueueTask } from '@/lib/types'
 
 export default async function TodayPage() {
   const data = await getDataset()
   const stats = buildStats(data)
+  const deals = buildDealCards(data)
   const { dueToday, overdue, stuck, needsChecking } = buildQueue(data)
 
   const allClear =
@@ -20,7 +23,16 @@ export default async function TodayPage() {
 
   return (
     <>
-      <PageHeader title="اليوم" hint={pageHints.today} />
+      <PageHeader
+        title="اليوم"
+        hint={pageHints.today}
+        action={
+          <>
+            <AddReminder contacts={data.contacts} />
+            <AddPayment deals={deals} variant="outline" />
+          </>
+        }
+      />
 
       {/* أربع أرقام بتلخّص الوضع */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -155,43 +167,5 @@ export default async function TodayPage() {
         </div>
       )}
     </>
-  )
-}
-
-function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: boolean }) {
-  return (
-    <div
-      className={
-        // الحد على بداية السطر — بالعربي هذا اليمين، وينعكس لحاله بالإنجليزي
-        overdue
-          ? 'row flex flex-wrap items-center gap-4 border-s-4 border-s-danger bg-danger/[0.03] px-6 py-3'
-          : 'row flex flex-wrap items-center gap-4 px-6 py-3'
-      }
-    >
-      <span
-        className={
-          overdue
-            ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-danger/12 text-danger'
-            : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-accent-soft text-accent'
-        }
-      >
-        {overdue ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-      </span>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-ink">{task.title}</p>
-        <p className="truncate text-xs text-ink-muted">
-          {task.contact ? task.contact.full_name : 'غير مرتبطة بشخص'}
-          {' · '}
-          <span className={overdue ? 'font-semibold text-danger' : ''}>{timeAgo(task.due_at)}</span>
-        </p>
-      </div>
-
-      {task.contact && (
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/contacts/${task.contact.id}`}>افتح الملف</Link>
-        </Button>
-      )}
-    </div>
   )
 }

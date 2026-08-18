@@ -12,11 +12,12 @@ import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { microcopy } from '@/lib/hints'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
 import { PhoneInput } from '@/components/ui/phone-input'
+import { ReminderForm } from '@/components/shared/add-reminder'
 import { createActivity, createContact, createDeal } from '@/lib/actions'
 import type { Contact, Product } from '@/lib/types'
 
 /**
- * الإضافة السريعة — 3 تبويبات، وكل تبويب 5 حقول كحد أقصى.
+ * الإضافة السريعة — 4 تبويبات، وكل تبويب 5 حقول كحد أقصى.
  *
  * أهم شيء فيها: حقل الهاتف بيدوّر على الرقم وقت الكتابة، وإذا كان مسجّل بيقترح
  * تفتح ملف الشخص بدل ما يعمل نسخة ثانية منه.
@@ -48,6 +49,7 @@ export function QuickAdd({ contacts, products }: { contacts: Contact[]; products
             <TabsTrigger value="contact" className="flex-1">جهة اتصال</TabsTrigger>
             <TabsTrigger value="deal" className="flex-1">صفقة</TabsTrigger>
             <TabsTrigger value="activity" className="flex-1">نشاط</TabsTrigger>
+            <TabsTrigger value="reminder" className="flex-1">تذكير</TabsTrigger>
           </TabsList>
 
           <TabsContent value="contact" className="mt-4">
@@ -58,6 +60,9 @@ export function QuickAdd({ contacts, products }: { contacts: Contact[]; products
           </TabsContent>
           <TabsContent value="activity" className="mt-4">
             <ActivityForm contacts={contacts} onDone={() => setOpen(false)} />
+          </TabsContent>
+          <TabsContent value="reminder" className="mt-4">
+            <ReminderForm contacts={contacts} onDone={() => setOpen(false)} />
           </TabsContent>
         </Tabs>
       </DialogContent>
