@@ -17,6 +17,8 @@ export interface ActionResult {
   ok: boolean
   error?: string
   id?: string
+  /** مسار الصفقة الجديدة، لننقل المستخدم إلى اللوحة التي هبطت فيها */
+  pipelineId?: string
 }
 
 const FAILED = 'لم يتم الحفظ. أعد المحاولة، فإن تكرّر الأمر فأبلغنا به.'
@@ -186,7 +188,7 @@ export async function createDeal(input: {
   revalidatePath('/deals')
   revalidatePath('/')
   revalidatePath(`/contacts/${contact.id}`)
-  return { ok: true, id: data.id }
+  return { ok: true, id: data.id, pipelineId: pipeline.id }
 }
 
 // ---------------------------------------------------------------------------

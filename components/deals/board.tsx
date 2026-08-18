@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
-  DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable,
-  useSensor, useSensors, type DragEndEvent, type DragStartEvent,
+  closestCorners, DndContext, DragOverlay, MouseSensor, TouchSensor,
+  useDraggable, useDroppable, useSensor, useSensors,
+  type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
@@ -29,7 +31,19 @@ interface Props {
 }
 
 export function DealsBoard({ deals: initial, stages, products, users, contacts, live }: Props) {
+  const router = useRouter()
+
+  /**
+   * الخادم هو مصدر الحقيقة، والحالة المحلية تسبقه لحظة السحب فقط.
+   * بدون هذه المزامنة تتجمّد اللوحة على أول تحميل: تبدّل المسار أو تضيف صفقة
+   * فتبقى ترى القائمة القديمة — وهو ما يبدو وكأن الصفقات اختفت.
+   */
   const [deals, setDeals] = useState(initial)
+  useEffect(() => { setDeals(initial) }, [initial])
+
+  // نحتفظ بأحدث ما جاء من الخادم للرجوع إليه عند فشل الحفظ
+  const serverDeals = useRef(initial)
+  useEffect(() => { serverDeals.current = initial }, [initial])
   const [dragging, setDragging] = useState<DealCard | null>(null)
   const [productFilter, setProductFilter] = useState('')
   const [ownerFilter, setOwnerFilter] = useState('')
@@ -40,7 +54,11 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
   const [reasonTouched, setReasonTouched] = useState(false)
   const [toast, setToast] = useState('')
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // على الهاتف: ضغطة قصيرة قبل السحب، وإلا تعارض السحب مع تمرير الصفحة
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+  )
 
   const visible = useMemo(
     () =>
@@ -62,9 +80,12 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
         .update({ stage_id: stageId, ...(reason ? { lost_reason: reason } : {}) })
         .eq('id', dealId)
       if (error) throw error
+      // نطلب من الخادم أحدث نسخة ليبقى العدّاد والمراحل مطابقين للواقع
+      router.refresh()
     } catch {
-      // تعود البطاقة إلى مكانها الأصلي إن فشل الحفظ
-      setDeals(initial)
+      // الرجوع إلى آخر ما عرفه الخادم، لا إلى حالة فتح الصفحة —
+      // وإلا تراجعت كل النقلات السابقة في الجلسة مع فشل نقلة واحدة
+      setDeals(serverDeals.current)
       setToast(microcopy.errors.saveFailed)
     }
   }
@@ -168,7 +189,13 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
         </span>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setDragging(null)}
+      >
         {/* الكمبيوتر: بورد أفقي. الموبايل: أعمدة فوق بعض */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:overflow-x-auto md:pb-4 scroll-slim">
           {stages.map((stage) => (
@@ -178,7 +205,8 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
           <div className="hidden w-2 shrink-0 md:block" aria-hidden />
         </div>
 
-        <DragOverlay dropAnimation={null}>
+        {/* حركة الإفلات: البطاقة تستقرّ في مكانها بدل أن تقفز إليه */}
+        <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(.2,.8,.3,1)' }}>
           {dragging ? <Card deal={dragging} overlay /> : null}
         </DragOverlay>
       </DndContext>
@@ -232,19 +260,30 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
 }
 
 function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
+  const { setNodeRef, isOver, active } = useDroppable({ id: stage.id })
   const total = deals.reduce((sum, d) => sum + d.value, 0)
+
+  // العمود المصدر لا يُبرز كهدف: إعادة الإفلات في مكانها ليست نقلة
+  const dragged = active ? String(active.id) : null
+  const fromHere = dragged ? deals.some((d) => d.id === dragged) : false
+  const targeted = isOver && !fromHere
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'w-full shrink-0 rounded-card transition-colors duration-150 md:w-[280px]',
-        isOver && 'bg-accent-soft',
+        'w-full shrink-0 rounded-card p-1 transition-colors duration-200 md:w-[280px]',
+        targeted && 'bg-accent-soft',
       )}
     >
       {/* ترويسة العمود: اسم المرحلة بلونها + العدد والمجموع */}
-      <div className="mb-3 rounded-card px-3 py-2" style={{ backgroundColor: stage.color }}>
+      <div
+        className={cn(
+          'mb-3 rounded-card px-3 py-2 transition-transform duration-200',
+          targeted && 'scale-[1.02]',
+        )}
+        style={{ backgroundColor: stage.color }}
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-bold text-white">{stage.name}</span>
           <span className="num rounded-pill bg-white/25 px-2 py-0.5 text-xs font-bold text-white">
@@ -257,7 +296,17 @@ function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
       <div className="space-y-3 md:min-h-[120px]">
         {deals.map((d) => <Card key={d.id} deal={d} />)}
 
-        {!deals.length && (
+        {/* مكان الاستقرار: يظهر أثناء التصويب على العمود */}
+        {targeted && (
+          <div
+            className="rounded-card border-2 border-dashed border-accent/50 bg-card/60 py-7 text-center text-xs font-semibold text-accent"
+            aria-hidden
+          >
+            أفلتها هنا
+          </div>
+        )}
+
+        {!deals.length && !targeted && (
           <p className="rounded-card border border-dashed border-line py-6 text-center text-xs text-ink-muted">
             اسحب صفقة إلى هنا
           </p>
@@ -275,10 +324,12 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
       ref={overlay ? undefined : setNodeRef}
       {...(overlay ? {} : listeners)}
       {...(overlay ? {} : attributes)}
+      style={overlay ? undefined : { touchAction: 'manipulation' }}
       className={cn(
-        'surface cursor-grab space-y-2 p-3 transition-shadow duration-150 hover:shadow-pop active:cursor-grabbing',
-        isDragging && 'opacity-40',
-        overlay && 'rotate-2 shadow-pop',
+        'surface cursor-grab space-y-2 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop active:cursor-grabbing',
+        // البطاقة الأصلية تُخفى أثناء السحب: النسخة الطائرة تكفي، وبقاؤها باهتة يربك العين
+        isDragging && 'invisible',
+        overlay && 'rotate-2 scale-[1.03] shadow-pop',
       )}
     >
       <div className="flex items-start justify-between gap-2">

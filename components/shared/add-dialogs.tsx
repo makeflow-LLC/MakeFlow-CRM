@@ -9,7 +9,7 @@
  */
 
 import { useMemo, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -164,6 +164,7 @@ export function AddDeal({
   size?: Size
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [pending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const [contactId, setContactId] = useState(presetContactId ?? '')
@@ -207,6 +208,12 @@ export function AddDeal({
                 setProductId(''); setValue('')
                 if (!presetContactId) setContactId('')
                 setOpen(false)
+
+                // المسار يتبع نوع المنتج، وقد يكون غير اللوحة المفتوحة —
+                // فننقل المستخدم إليها بدل أن يبحث عن صفقة يظنّها ضاعت
+                if (res.pipelineId && pathname === '/deals') {
+                  router.push(`/deals?pipeline=${res.pipelineId}`)
+                }
                 router.refresh()
               } else {
                 setError(res.error ?? '')
