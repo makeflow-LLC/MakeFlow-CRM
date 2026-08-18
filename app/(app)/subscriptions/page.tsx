@@ -2,7 +2,7 @@ import { RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { AddSubscription } from '@/components/shared/add-dialogs'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { buildSubscriptionRows, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
@@ -32,7 +32,18 @@ export default async function SubscriptionsPage() {
 
   return (
     <>
-      <PageHeader title="الاشتراكات" hint={pageHints.subscriptions} term="subscription" />
+      <PageHeader
+        title="الاشتراكات"
+        hint={pageHints.subscriptions}
+        term="subscription"
+        action={
+          <AddSubscription
+            organizations={data.organizations}
+            contacts={data.contacts}
+            products={data.products}
+          />
+        }
+      />
 
       {rows.length ? (
         <>
@@ -132,7 +143,14 @@ export default async function SubscriptionsPage() {
           icon={<RefreshCw className="h-7 w-7" />}
           title={emptyStates.subscriptions.title}
           body={emptyStates.subscriptions.body}
-          action={<Button>{emptyStates.subscriptions.action}</Button>}
+          action={
+            <AddSubscription
+              organizations={data.organizations}
+              contacts={data.contacts}
+              products={data.products}
+              label={emptyStates.subscriptions.action}
+            />
+          }
         />
       )}
     </>

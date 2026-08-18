@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
 import { OwnerAvatar } from '@/components/shared/bits'
+import { AddContact } from '@/components/shared/add-dialogs'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { formatNumber, timeAgo } from '@/lib/utils'
@@ -45,14 +46,14 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
           icon={<Users className="h-7 w-7" />}
           title={emptyStates.contacts.title}
           body={emptyStates.contacts.body}
-          action={<Button>{emptyStates.contacts.action}</Button>}
+          action={<AddContact contacts={rows} label={emptyStates.contacts.action} />}
         />
       ) : !filtered.length ? (
         <EmptyState
           icon={<Search className="h-7 w-7" />}
           title={emptyStates.contactsSearch.title}
           body={emptyStates.contactsSearch.body}
-          action={<Button>{emptyStates.contactsSearch.action}</Button>}
+          action={<AddContact contacts={rows} label={emptyStates.contactsSearch.action} />}
         />
       ) : (
         <Card className="overflow-hidden">

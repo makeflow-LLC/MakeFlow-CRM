@@ -226,6 +226,57 @@ export async function createActivity(input: {
 }
 
 // ---------------------------------------------------------------------------
+// اشتراك
+// ---------------------------------------------------------------------------
+
+export async function createSubscription(input: {
+  product_id: string
+  monthly_amount: number
+  organization_id?: string
+  contact_id?: string
+  plan_name?: string
+  renewal_date?: string
+}): Promise<ActionResult> {
+  const db = createClient()
+
+  if (!input.product_id) return { ok: false, error: 'اختر المنتج.' }
+  if (!input.organization_id && !input.contact_id) {
+    return { ok: false, error: 'اختر الجهة أو الشخص صاحب الاشتراك.' }
+  }
+  if (!(input.monthly_amount > 0)) {
+    return { ok: false, error: 'أدخل المبلغ الشهري بالأرقام.' }
+  }
+
+  const owner = await currentStaffId(db)
+  const today = new Date().toISOString().slice(0, 10)
+
+  // بلا تاريخ تجديد يصبح الاشتراك غير قابل للمتابعة، فنفترض شهراً من اليوم
+  const renewal = input.renewal_date || (() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 1)
+    return d.toISOString().slice(0, 10)
+  })()
+
+  const { data, error } = await db.from('subscriptions').insert({
+    product_id: input.product_id,
+    organization_id: input.organization_id || null,
+    contact_id: input.organization_id ? null : input.contact_id || null,
+    plan_name: input.plan_name?.trim() || null,
+    monthly_amount: input.monthly_amount,
+    start_date: today,
+    renewal_date: renewal,
+    status: 'active',
+    owner_id: owner,
+  }).select('id').single()
+
+  if (error) return { ok: false, error: readableError(error.message, 'deal') }
+
+  revalidatePath('/subscriptions')
+  revalidatePath('/')
+  return { ok: true, id: data.id }
+}
+
+// ---------------------------------------------------------------------------
 // مهمة — الخطوة التالية بعد إغلاق آخر مهمة على صفقة
 // ---------------------------------------------------------------------------
 

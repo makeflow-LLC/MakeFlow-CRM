@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { EmptyState } from '@/components/hints/empty-state'
 import { Toast } from '@/components/ui/toast'
 import { OwnerAvatar, ProductPill, StuckBadge } from '@/components/shared/bits'
+import { AddDeal } from '@/components/shared/add-dialogs'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import { STUCK_HOURS } from '@/lib/constants'
@@ -23,10 +24,11 @@ interface Props {
   stages: Stage[]
   products: Product[]
   users: User[]
+  contacts: { id: string; full_name: string }[]
   live: boolean
 }
 
-export function DealsBoard({ deals: initial, stages, products, users, live }: Props) {
+export function DealsBoard({ deals: initial, stages, products, users, contacts, live }: Props) {
   const [deals, setDeals] = useState(initial)
   const [dragging, setDragging] = useState<DealCard | null>(null)
   const [productFilter, setProductFilter] = useState('')
@@ -117,7 +119,7 @@ export function DealsBoard({ deals: initial, stages, products, users, live }: Pr
         icon={<KanbanSquare className="h-7 w-7" />}
         title={emptyStates.deals.title}
         body={emptyStates.deals.body}
-        action={<Button>{emptyStates.deals.action}</Button>}
+        action={<AddDeal contacts={contacts} products={products} label={emptyStates.deals.action} />}
       />
     )
   }
