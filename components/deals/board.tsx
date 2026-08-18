@@ -16,6 +16,7 @@ import { Toast } from '@/components/ui/toast'
 import { OwnerAvatar, ProductPill, StuckBadge } from '@/components/shared/bits'
 import { AddDeal } from '@/components/shared/add-dialogs'
 import { DeleteDeal } from './delete-deal'
+import { PaymentPrompt } from './payment-prompt'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import { STUCK_HOURS } from '@/lib/constants'
@@ -51,6 +52,9 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
 
   // الصفقة الرايحة لمرحلة «خسرناه» — بتستنى سبب قبل ما تتحرك
   const [pendingLoss, setPendingLoss] = useState<{ deal: DealCard; stage: Stage } | null>(null)
+
+  // الصفقة الواصلة لمرحلة دفع — نسأل عن المبلغ فوراً بدل أن يُدخَل مرتين
+  const [pendingPayment, setPendingPayment] = useState<{ deal: DealCard; stage: Stage } | null>(null)
   const [lostReason, setLostReason] = useState('')
   const [reasonTouched, setReasonTouched] = useState(false)
   const [toast, setToast] = useState('')
@@ -129,6 +133,11 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
     }
 
     moveDeal(deal, stage)
+
+    // بلغت مرحلة الدفع أو النجاح ولم يُسجَّل مقابلها كاملاً؟ اسأل الآن.
+    if ((stage.is_paid_stage || stage.is_won) && deal.value - deal.paid_total > 0) {
+      setPendingPayment({ deal, stage })
+    }
   }
 
   function onDragStart(event: DragStartEvent) {
@@ -254,6 +263,15 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
           </div>
         </DialogContent>
       </Dialog>
+
+      {pendingPayment && (
+        <PaymentPrompt
+          key={pendingPayment.deal.id}
+          deal={pendingPayment.deal}
+          stageName={pendingPayment.stage.name}
+          onClose={() => setPendingPayment(null)}
+        />
+      )}
 
       {toast && <Toast message={toast} onClose={() => setToast('')} />}
     </>

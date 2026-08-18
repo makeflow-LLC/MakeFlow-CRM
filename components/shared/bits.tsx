@@ -65,13 +65,15 @@ export function BotBadge() {
 
 /** بطاقة رقم بالأعلى — العنوان فيه أيقونة شرح حين لا يكون المصطلح واضحاً */
 export function StatCard({
-  label, value, term, tone = 'default', suffix,
+  label, value, term, tone = 'default', suffix, sub,
 }: {
   label: string
   value: number
   term?: TermKey
   tone?: 'default' | 'warn' | 'accent' | 'success'
   suffix?: string
+  /** سطر صغير تحت الرقم — العدد خلف المبلغ، أو ما يفسّره */
+  sub?: React.ReactNode
 }) {
   const toneClass = {
     default: 'text-ink',
@@ -89,6 +91,7 @@ export function StatCard({
       <p className={cn('num text-3xl font-bold', toneClass)}>
         {suffix ? formatMoney(value) : formatNumber(value)}
       </p>
+      {sub && <p className="mt-1 text-xs leading-relaxed text-ink-muted">{sub}</p>}
     </div>
   )
 }

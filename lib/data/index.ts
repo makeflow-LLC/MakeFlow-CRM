@@ -269,9 +269,30 @@ export function buildStats(data: Dataset): TodayStats {
   const endOfMonth = new Date()
   endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0)
 
+  const now = new Date()
+  const collected_this_month = data.payments
+    .filter((p) => {
+      if (p.status !== 'paid' || !p.paid_at) return false
+      const at = new Date(p.paid_at)
+      return at.getFullYear() === now.getFullYear() && at.getMonth() === now.getMonth()
+    })
+    .reduce((sum, p) => sum + p.amount, 0)
+
+  // صفقة في مرحلة «دفع» أو مرحلة ناجحة تعني أنك اعتبرت البيع تامّاً. الفرق بين
+  // قيمتها وما وصل منها فعلاً هو المال المعلّق: بِعتَه ولم تقبضه بعد.
+  const closedStageIds = new Set(
+    data.stages.filter((s) => s.is_paid_stage || s.is_won).map((s) => s.id),
+  )
+  const uncollected = data.deals
+    .filter((d) => d.status !== 'lost' && (closedStageIds.has(d.stage_id) || d.status === 'won'))
+    .reduce((sum, d) => sum + Math.max(d.value - paidTotalFor(d.id, data.payments), 0), 0)
+
   return {
     open_deals: openDeals.length,
+    open_value: openDeals.reduce((sum, d) => sum + d.value, 0),
     awaiting_payment: openDeals.filter((d) => awaitingStageIds.has(d.stage_id)).length,
+    collected_this_month,
+    uncollected,
     mrr: data.subscriptions
       .filter((s) => s.status === 'active')
       .reduce((sum, s) => sum + s.monthly_amount, 0),
@@ -370,11 +391,17 @@ export function buildReports(data: Dataset) {
 
   const dealsByStage = data.pipelines.map((pl) => ({
     pipeline: pl,
-    stages: stagesFor(data, pl.id).map((s) => ({
-      name: s.name,
-      color: s.color,
-      count: data.deals.filter((d) => d.stage_id === s.id).length,
-    })),
+    stages: stagesFor(data, pl.id).map((s) => {
+      const inStage = data.deals.filter((d) => d.stage_id === s.id)
+      return {
+        name: s.name,
+        color: s.color,
+        count: inStage.length,
+        // المال في كل مرحلة، لا عدد البطاقات وحده: عشر صفقات صغيرة في مرحلة
+        // متأخرة ليست كصفقتين كبيرتين، والعدد وحده يخفي هذا الفرق.
+        value: inStage.reduce((sum, d) => sum + d.value, 0),
+      }
+    }),
   }))
 
   const conversion = data.pipelines.map((pl) => {
@@ -410,6 +437,37 @@ export function buildReports(data: Dataset) {
       return acc
     }, {})
 
+  /**
+   * ملخّص المال في ثلاثة أرقام تُقرأ معاً:
+   * المتوقَّع (ما زال مفتوحاً) · المتعاقَد عليه (نجح) · المقبوض فعلاً.
+   * عرض المقبوض وحده — وهو ما كانت عليه هذه الشاشة — يجعل عملاً كاملاً
+   * يبدو كأنه لم يحدث ما دامت الدفعة لم تُسجَّل بعد.
+   */
+  const wonValue = data.deals
+    .filter((d) => d.status === 'won')
+    .reduce((sum, d) => sum + d.value, 0)
+
+  const openValue = data.deals
+    .filter((d) => d.status === 'open')
+    .reduce((sum, d) => sum + d.value, 0)
+
+  const lostValue = data.deals
+    .filter((d) => d.status === 'lost')
+    .reduce((sum, d) => sum + d.value, 0)
+
+  const collected = data.payments
+    .filter((p) => p.status === 'paid')
+    .reduce((sum, p) => sum + p.amount, 0)
+
+  const closedStageIds = new Set(
+    data.stages.filter((s) => s.is_paid_stage || s.is_won).map((s) => s.id),
+  )
+  const uncollected = data.deals
+    .filter((d) => d.status !== 'lost' && (closedStageIds.has(d.stage_id) || d.status === 'won'))
+    .reduce((sum, d) => sum + Math.max(d.value - paidTotalFor(d.id, data.payments), 0), 0)
+
+  const money = { openValue, wonValue, lostValue, collected, uncollected }
+
   const lostReasons = data.deals
     .filter((d) => d.status === 'lost' && d.lost_reason)
     .reduce<Record<string, number>>((acc, d) => {
@@ -433,5 +491,6 @@ export function buildReports(data: Dataset) {
       .map(([reason, count]) => ({ reason, count }))
       .sort((a, b) => b.count - a.count),
     totalRevenue: revenueByProduct.reduce((s, r) => s + r.revenue, 0),
+    money,
   }
 }

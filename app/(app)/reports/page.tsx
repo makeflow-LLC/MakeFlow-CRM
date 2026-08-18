@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { HtmlBars, MonthlyRevenueChart } from '@/components/shared/report-charts'
+import { StatCard } from '@/components/shared/bits'
 import { buildReports, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
 import { formatMoney, formatNumber } from '@/lib/utils'
@@ -51,6 +52,26 @@ export default async function ReportsPage() {
     <>
       <PageHeader title="التقارير" hint={pageHints.reports} />
 
+      {/* المال أولاً: من المتوقَّع إلى المقبوض، والفجوة بينهما ظاهرة */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="قيمة الصفقات المفتوحة" value={r.money.openValue} suffix="ILS" tone="accent"
+          sub="مال متوقَّع، لم يُحسم بعد"
+        />
+        <StatCard
+          label="قيمة الصفقات الناجحة" value={r.money.wonValue} suffix="ILS"
+          sub="ما اتُّفق عليه فعلاً"
+        />
+        <StatCard
+          label="المقبوض" value={r.money.collected} suffix="ILS" tone="success"
+          sub="دفعات مؤكَّدة دخلت الصندوق"
+        />
+        <StatCard
+          label="بِعته ولم تقبضه" value={r.money.uncollected} suffix="ILS" tone="warn"
+          sub="الفرق بين ما بِعته وما سجّلت قبضه"
+        />
+      </div>
+
       {/* نسبة التحويل لكل مسار */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         {r.conversion.map((c) => (
@@ -69,7 +90,7 @@ export default async function ReportsPage() {
         ))}
       </div>
 
-      {/* الصفقات حسب المرحلة */}
+      {/* الصفقات حسب المرحلة — بالعدد وبالمال */}
       <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         {r.dealsByStage.map((p) => (
           <Card key={p.pipeline.id}>
@@ -78,9 +99,22 @@ export default async function ReportsPage() {
                 الصفقات حسب المرحلة — {p.pipeline.name}
                 <HintTooltip term="stage" />
               </CardTitle>
+              <span className="num text-sm font-bold text-ink">
+                {formatMoney(p.stages.reduce((sum, s) => sum + s.value, 0))}
+              </span>
             </CardHeader>
-            <CardBody>
-              <HtmlBars rows={p.stages.map((s) => ({ name: s.name, color: s.color, value: s.count }))} />
+            <CardBody className="space-y-6">
+              <div>
+                <p className="mb-2 text-xs font-bold text-ink-muted">عدد الصفقات</p>
+                <HtmlBars rows={p.stages.map((s) => ({ name: s.name, color: s.color, value: s.count }))} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-bold text-ink-muted">قيمتها بالشيكل</p>
+                <HtmlBars
+                  format="money"
+                  rows={p.stages.map((s) => ({ name: s.name, color: s.color, value: s.value }))}
+                />
+              </div>
             </CardBody>
           </Card>
         ))}
@@ -90,7 +124,7 @@ export default async function ReportsPage() {
         {/* الإيراد حسب المنتج */}
         <Card>
           <CardHeader>
-            <CardTitle>الإيراد حسب المنتج</CardTitle>
+            <CardTitle>المقبوض حسب المنتج</CardTitle>
             <span className="num text-sm font-bold text-ink">{formatMoney(r.totalRevenue)}</span>
           </CardHeader>
           <CardBody>

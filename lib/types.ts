@@ -188,7 +188,13 @@ export interface QueueTask extends Task {
 
 export interface TodayStats {
   open_deals: number
+  /** مجموع قيمة الصفقات المفتوحة — المال المتوقَّع، لا المقبوض */
+  open_value: number
   awaiting_payment: number
+  /** ما دخل الصندوق فعلاً هذا الشهر */
+  collected_this_month: number
+  /** صفقات اعتبرناها منتهية ولم يصل مقابلها كاملاً */
+  uncollected: number
   mrr: number
   renewals_this_month: number
 }

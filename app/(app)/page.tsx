@@ -36,10 +36,25 @@ export default async function TodayPage() {
 
       {/* أربع أرقام بتلخّص الوضع */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="صفقات مفتوحة" value={stats.open_deals} term="deal" tone="accent" />
-        <StatCard label="بانتظار الدفع" value={stats.awaiting_payment} tone="warn" />
-        <StatCard label="الإيراد الشهري المتكرر" value={stats.mrr} term="mrr" tone="success" suffix="ILS" />
-        <StatCard label="تجديدات هذا الشهر" value={stats.renewals_this_month} term="subscription" />
+        <StatCard
+          label="قيمة الصفقات المفتوحة" value={stats.open_value} term="deal"
+          tone="accent" suffix="ILS"
+          sub={<>موزّعة على <span className="num font-bold text-ink">{stats.open_deals}</span> صفقة، منها <span className="num font-bold text-ink">{stats.awaiting_payment}</span> بانتظار الدفع</>}
+        />
+        <StatCard
+          label="حصّلته هذا الشهر" value={stats.collected_this_month}
+          tone="success" suffix="ILS"
+          sub="مجموع الدفعات المؤكَّدة منذ أول الشهر"
+        />
+        <StatCard
+          label="بِعته ولم تقبضه" value={stats.uncollected}
+          tone="warn" suffix="ILS"
+          sub="صفقات وصلت مرحلة الدفع أو نجحت، ولم يُسجَّل مقابلها كاملاً"
+        />
+        <StatCard
+          label="الإيراد الشهري المتكرر" value={stats.mrr} term="mrr" suffix="ILS"
+          sub={<><span className="num font-bold text-ink">{stats.renewals_this_month}</span> تجديداً مستحقّاً هذا الشهر</>}
+        />
       </div>
 
       {allClear ? (
