@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/hints/empty-state'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogActivity } from '@/components/contacts/log-activity'
+import { DeleteContact } from '@/components/contacts/delete-contact'
 import { AddDeal } from '@/components/shared/add-dialogs'
 import { Avatar } from '@/components/ui/avatar'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
@@ -83,6 +84,11 @@ export default async function ContactPage({ params }: { params: { id: string } }
                   اتصل
                 </a>
               </Button>
+
+              {/* الحذف آخر ما في البطاقة، ومفصول بخط — إجراء لا يُضغط سهواً */}
+              <div className="border-t border-line pt-3">
+                <DeleteContact contactId={contact.id} fullName={contact.full_name} />
+              </div>
             </CardBody>
           </Card>
 

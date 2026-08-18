@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { normalizePhone } from '@/lib/utils'
+import { isE164 } from '@/lib/phone'
 import type { ContactSource, OrgType } from '@/lib/types'
 
 export interface ActionResult {
@@ -33,7 +34,7 @@ function readableError(message: string, kind: 'contact' | 'organization' | 'deal
     return 'هذا السجل موجود مسبقاً.'
   }
   if (m.includes('contacts_phone_check')) {
-    return 'صيغة رقم الهاتف غير صحيحة. يجب أن يبدأ بـ ‎+970‎ أو ‎+972‎.'
+    return 'صيغة رقم الهاتف غير صحيحة. اختر مقدّمة البلد ثم اكتب الرقم كاملاً.'
   }
   if (m.includes('row-level security') || m.includes('permission denied')) {
     return 'انتهت جلستك. سجّل الدخول مرة أخرى ثم أعد المحاولة.'
@@ -67,8 +68,8 @@ export async function createContact(input: {
   const phone = normalizePhone(input.phone)
 
   if (!input.full_name.trim()) return { ok: false, error: 'أدخل الاسم.' }
-  if (!/^\+(970|972)[0-9]{8,9}$/.test(phone)) {
-    return { ok: false, error: 'يجب أن يبدأ الرقم بـ ‎+970‎ أو ‎+972‎' }
+  if (!isE164(phone)) {
+    return { ok: false, error: 'أدخل الرقم بمقدّمة بلده، مثل ‎+970599123456‎' }
   }
 
   // فحص التكرار قبل المحاولة، لنعطي رسالة أوضح من خطأ قاعدة البيانات
@@ -97,6 +98,89 @@ export async function createContact(input: {
   revalidatePath('/contacts')
   revalidatePath('/')
   return { ok: true, id: data.id }
+}
+
+/**
+ * حذف جهة اتصال.
+ *
+ * هذا أثقل حذف في النظام: الشخص جذرُ كل ما بُني عليه، فحذفه يجرّ صفقاته
+ * ومدفوعاتها وأنشطته ومهامه دفعةً واحدة. لذلك نسأل الخادم أولاً عن حجم ما
+ * سيُفقد ونعرضه بالرقم قبل أي تأكيد، ونشدّد التحذير إن كان عليه مبلغ مسدَّد.
+ *
+ * الاشتراكات استثناء: تُفكّ عن الشخص ولا تُحذف، لأنها غالباً مرتبطة بجهة
+ * تستمرّ بعد رحيل من كان يمثّلها. لكن اشتراكاً باسم الشخص وحده لا جهة له لا
+ * يمكن فكّه — قاعدة البيانات تشترط لكل اشتراك صاحباً — فوجودُه يمنع الحذف،
+ * ونقولها قبل الضغط لا بعده.
+ */
+export async function contactDeletionImpact(contactId: string): Promise<{
+  fullName: string
+  deals: number
+  payments: number
+  paidTotal: number
+  activities: number
+  tasks: number
+  subscriptions: number
+  /** اشتراكات لا جهة لها — تمنع الحذف */
+  personalSubscriptions: number
+} | null> {
+  const db = createClient()
+
+  const { data: contact } = await db
+    .from('contacts').select('id, full_name').eq('id', contactId).maybeSingle()
+  if (!contact) return null
+
+  const { data: deals } = await db.from('deals').select('id').eq('contact_id', contactId)
+  const dealIds = (deals ?? []).map((d) => d.id)
+
+  const [{ data: payments }, { count: activities }, { count: tasks }, { data: subs }] =
+    await Promise.all([
+      dealIds.length
+        ? db.from('payments').select('amount, status').in('deal_id', dealIds)
+        : Promise.resolve({ data: [] as { amount: number; status: string }[] }),
+      db.from('activities').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
+      db.from('tasks').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
+      db.from('subscriptions').select('id, organization_id').eq('contact_id', contactId),
+    ])
+
+  return {
+    fullName: contact.full_name,
+    deals: dealIds.length,
+    payments: payments?.length ?? 0,
+    paidTotal: (payments ?? [])
+      .filter((p) => p.status === 'paid')
+      .reduce((sum, p) => sum + Number(p.amount), 0),
+    activities: activities ?? 0,
+    tasks: tasks ?? 0,
+    subscriptions: subs?.length ?? 0,
+    personalSubscriptions: (subs ?? []).filter((s) => !s.organization_id).length,
+  }
+}
+
+export async function deleteContact(contactId: string): Promise<ActionResult> {
+  const db = createClient()
+
+  // اشتراك باسم الشخص وحده يجعل الحذف يفشل في قاعدة البيانات برسالة غامضة،
+  // فنسبقها برسالة تقول ما العمل.
+  const { data: personal } = await db
+    .from('subscriptions').select('id').eq('contact_id', contactId).is('organization_id', null)
+
+  if ((personal?.length ?? 0) > 0) {
+    return {
+      ok: false,
+      error: 'لهذا الشخص اشتراك باسمه لا جهة له. انقل الاشتراك إلى جهة أو أنهِه أولاً، ثم احذفه.',
+    }
+  }
+
+  const { error } = await db.from('contacts').delete().eq('id', contactId)
+  if (error) return { ok: false, error: readableError(error.message, 'contact') }
+
+  revalidatePath('/contacts')
+  revalidatePath('/deals')
+  revalidatePath('/payments')
+  revalidatePath('/subscriptions')
+  revalidatePath('/organizations')
+  revalidatePath('/')
+  return { ok: true }
 }
 
 // ---------------------------------------------------------------------------

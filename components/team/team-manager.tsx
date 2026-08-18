@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { FieldError, Input, Label } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Toast } from '@/components/ui/toast'
 import {
@@ -430,11 +431,7 @@ function MemberForm({
 
           <div className="space-y-1">
             <Label htmlFor="tm-phone">رقم الهاتف (اختياري)</Label>
-            <Input
-              id="tm-phone" value={phone} dir="ltr" className="num text-left"
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0599000000"
-            />
+            <PhoneInput id="tm-phone" value={phone} onChange={setPhone} />
           </div>
 
           <div className="space-y-2">

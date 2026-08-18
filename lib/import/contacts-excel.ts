@@ -26,7 +26,7 @@ export interface ColumnSpec {
 
 export const TEMPLATE_COLUMNS: ColumnSpec[] = [
   { header: 'الاسم الكامل', field: 'full_name', width: 28, required: true, hint: 'إلزامي — الاسم كما تناديه' },
-  { header: 'رقم الهاتف', field: 'phone', width: 22, required: true, hint: 'إلزامي — 0599123456 أو ‎+970599123456‎' },
+  { header: 'رقم الهاتف', field: 'phone', width: 22, required: true, hint: 'إلزامي — بمقدّمة البلد ‎+970599123456‎، ورقمٌ يبدأ بصفر يُحسب فلسطينياً' },
   { header: 'البريد الإلكتروني', field: 'email', width: 26, hint: 'اختياري' },
   { header: 'المدينة', field: 'city', width: 16, hint: 'اختياري — غزة، خان يونس…' },
   { header: 'الجهة', field: 'organization_name', width: 24, hint: 'اختياري — اسم العيادة أو الشركة' },

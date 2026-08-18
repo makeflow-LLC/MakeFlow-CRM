@@ -11,6 +11,7 @@ import { FieldError, Input, Label, Textarea } from '@/components/ui/input'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { microcopy } from '@/lib/hints'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { createActivity, createContact, createDeal } from '@/lib/actions'
 import type { Contact, Product } from '@/lib/types'
 
@@ -127,13 +128,11 @@ function ContactForm({ contacts, onDone }: { contacts: Contact[]; onDone: () => 
 
       <div className="space-y-1">
         <Label htmlFor="qa-phone">رقم الهاتف</Label>
-        <Input
+        <PhoneInput
           id="qa-phone"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={setPhone}
           onBlur={() => setTouched(true)}
-          placeholder="0599123456"
-          className="num text-right"
         />
         <FieldError>{phoneError}</FieldError>
 

@@ -18,6 +18,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient, hasAdminKey } from '@/lib/supabase/admin'
 import { normalizePhone } from '@/lib/utils'
+import { isE164 } from '@/lib/phone'
 import type { Role } from '@/lib/types'
 
 export interface TeamResult {
@@ -219,8 +220,8 @@ export async function createTeamMember(input: {
   }
 
   const phone = input.phone?.trim() ? normalizePhone(input.phone) : null
-  if (phone && !/^\+(970|972)[0-9]{8,9}$/.test(phone)) {
-    return { ok: false, error: 'يجب أن يبدأ الرقم بـ ‎+970‎ أو ‎+972‎' }
+  if (phone && !isE164(phone)) {
+    return { ok: false, error: 'أدخل الرقم بمقدّمة بلده، مثل ‎+970599123456‎' }
   }
 
   const admin = createAdminClient()
@@ -292,8 +293,8 @@ export async function updateTeamMember(
 
   if (input.phone !== undefined) {
     const phone = input.phone?.trim() ? normalizePhone(input.phone) : null
-    if (phone && !/^\+(970|972)[0-9]{8,9}$/.test(phone)) {
-      return { ok: false, error: 'يجب أن يبدأ الرقم بـ ‎+970‎ أو ‎+972‎' }
+    if (phone && !isE164(phone)) {
+      return { ok: false, error: 'أدخل الرقم بمقدّمة بلده، مثل ‎+970599123456‎' }
     }
     patch.phone = phone
   }

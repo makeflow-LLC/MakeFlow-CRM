@@ -18,6 +18,7 @@ import { FieldError, Input, Label } from '@/components/ui/input'
 import { createContact, createDeal, createSubscription } from '@/lib/actions'
 import { microcopy } from '@/lib/hints'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
+import { PhoneInput } from '@/components/ui/phone-input'
 import type { Contact, Organization, Product } from '@/lib/types'
 
 const selectClass =
@@ -100,11 +101,10 @@ export function AddContact({
 
           <div className="space-y-1">
             <Label htmlFor="ac-phone">رقم الهاتف</Label>
-            <Input
-              id="ac-phone" value={phone} className="num text-right"
-              onChange={(e) => setPhone(e.target.value)}
+            <PhoneInput
+              id="ac-phone" value={phone}
+              onChange={setPhone}
               onBlur={() => setTouched(true)}
-              placeholder="0599123456"
             />
             <FieldError>
               {touched && phone && !isValidPhone(phone) ? microcopy.errors.phoneFormat : ''}

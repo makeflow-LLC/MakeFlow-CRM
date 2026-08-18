@@ -93,10 +93,12 @@ export function initials(name: string): string {
   return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
 }
 
-/** التحقق من الرقم: يجب أن يبدأ بـ +970 أو +972 */
+/**
+ * التحقق من الرقم: صيغة دولية كاملة، بمقدّمة بلدٍ أياً كانت.
+ * الشرط هنا هو نفسه المكتوب في قاعدة البيانات، فما تقبله الواجهة تقبله هي.
+ */
 export function isValidPhone(phone: string): boolean {
-  const normalized = normalizePhone(phone)
-  return /^\+(970|972)[0-9]{8,9}$/.test(normalized)
+  return /^\+[1-9][0-9]{6,14}$/.test(normalizePhone(phone))
 }
 
 /** المنطق نفسه المطبَّق في normalize_phone بقاعدة البيانات */
