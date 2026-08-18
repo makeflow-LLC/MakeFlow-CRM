@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
-  BarChart3, Building2, CreditCard, KanbanSquare, Package, PanelRightClose,
-  PanelRightOpen, RefreshCw, Sun, Users,
+  BarChart3, Building2, CreditCard, KanbanSquare, MoreHorizontal, Package,
+  PanelRightClose, PanelRightOpen, RefreshCw, Sun, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -89,30 +90,81 @@ export function Sidebar() {
   )
 }
 
-/** شريط سفلي للموبايل — البورد يتم قائمة، والتنقل يتم تحت */
+/**
+ * شريط سفلي للهاتف.
+ *
+ * لا تتسع الشاشة لثمانية عناصر، لكن قصّ القائمة يجعل الشاشات المتبقية بلا
+ * أي طريق إليها. فأربعة عناصر يومية في الشريط، والبقية خلف «المزيد».
+ */
+const PRIMARY = 4
+
 export function MobileNav() {
   const pathname = usePathname()
+  const [more, setMore] = useState(false)
+
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
 
+  const primary = NAV.slice(0, PRIMARY)
+  const rest = NAV.slice(PRIMARY)
+  const restActive = rest.some((n) => isActive(n.href))
+
   return (
-    <nav className="fixed bottom-0 right-0 left-0 z-40 flex items-stretch justify-around border-t border-line bg-card md:hidden">
-      {NAV.slice(0, 5).map(({ href, label, icon: Icon }) => {
-        const active = isActive(href)
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-semibold transition-colors duration-150',
-              active ? 'text-accent' : 'text-ink-muted',
-            )}
-          >
-            <Icon className="h-5 w-5" strokeWidth={2} />
-            <span className="truncate">{label}</span>
-          </Link>
-        )
-      })}
-    </nav>
+    <>
+      <nav className="fixed bottom-0 right-0 left-0 z-40 flex items-stretch justify-around border-t border-line bg-card md:hidden">
+        {primary.map(({ href, label, icon: Icon }) => {
+          const active = isActive(href)
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-semibold transition-colors duration-150',
+                active ? 'text-accent' : 'text-ink-muted',
+              )}
+            >
+              <Icon className="h-5 w-5" strokeWidth={2} />
+              <span className="truncate">{label}</span>
+            </Link>
+          )
+        })}
+
+        <button
+          type="button"
+          onClick={() => setMore(true)}
+          className={cn(
+            'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-semibold transition-colors duration-150',
+            restActive ? 'text-accent' : 'text-ink-muted',
+          )}
+        >
+          <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
+          <span className="truncate">المزيد</span>
+        </button>
+      </nav>
+
+      <Dialog open={more} onOpenChange={setMore}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>باقي الشاشات</DialogTitle>
+          <div className="mt-4 grid gap-1">
+            {rest.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMore(false)}
+                className={cn(
+                  'flex items-center gap-3 rounded-input px-3 py-3 text-sm font-semibold transition-colors duration-150',
+                  isActive(href)
+                    ? 'bg-accent text-white'
+                    : 'text-ink hover:bg-page',
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                {label}
+              </Link>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
