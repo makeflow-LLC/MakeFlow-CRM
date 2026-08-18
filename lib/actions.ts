@@ -191,6 +191,143 @@ export async function createDeal(input: {
   return { ok: true, id: data.id, pipelineId: pipeline.id }
 }
 
+/**
+ * حذف صفقة.
+ *
+ * الحذف يجرّ معه مدفوعات الصفقة ومهامها (قيود cascade في قاعدة البيانات)،
+ * لذا نُرجع للواجهة ما سيُفقد قبل التأكيد، ونمنع الحذف الصامت لسجلّ مالي.
+ */
+export async function dealDeletionImpact(dealId: string): Promise<{
+  title: string
+  contactName: string
+  payments: number
+  paidTotal: number
+  tasks: number
+} | null> {
+  const db = createClient()
+
+  const { data: deal } = await db
+    .from('deals').select('id, title, contact_id').eq('id', dealId).maybeSingle()
+  if (!deal) return null
+
+  const [{ data: contact }, { data: payments }, { count: tasks }] = await Promise.all([
+    db.from('contacts').select('full_name').eq('id', deal.contact_id).maybeSingle(),
+    db.from('payments').select('amount, status').eq('deal_id', dealId),
+    db.from('tasks').select('id', { count: 'exact', head: true }).eq('deal_id', dealId),
+  ])
+
+  return {
+    title: deal.title,
+    contactName: contact?.full_name ?? '',
+    payments: payments?.length ?? 0,
+    paidTotal: (payments ?? [])
+      .filter((p) => p.status === 'paid')
+      .reduce((sum, p) => sum + Number(p.amount), 0),
+    tasks: tasks ?? 0,
+  }
+}
+
+export async function deleteDeal(dealId: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const { data: deal } = await db
+    .from('deals').select('contact_id').eq('id', dealId).maybeSingle()
+
+  const { error } = await db.from('deals').delete().eq('id', dealId)
+  if (error) return { ok: false, error: readableError(error.message, 'deal') }
+
+  revalidatePath('/deals')
+  revalidatePath('/')
+  revalidatePath('/payments')
+  if (deal?.contact_id) revalidatePath(`/contacts/${deal.contact_id}`)
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// المنتجات
+// ---------------------------------------------------------------------------
+
+export async function createProduct(input: {
+  name: string
+  kind: 'course' | 'subscription' | 'service'
+  default_price?: number
+  color?: string
+}): Promise<ActionResult> {
+  const db = createClient()
+
+  if (!input.name.trim()) return { ok: false, error: 'أدخل اسم المنتج.' }
+
+  const { data, error } = await db.from('products').insert({
+    name: input.name.trim(),
+    kind: input.kind,
+    default_price: input.default_price ?? null,
+    color: input.color || '#5B4CE0',
+    active: true,
+  }).select('id').single()
+
+  if (error) {
+    const m = error.message.toLowerCase()
+    if (m.includes('duplicate') || m.includes('unique')) {
+      return { ok: false, error: 'يوجد منتج بهذا الاسم مسبقاً.' }
+    }
+    return { ok: false, error: FAILED }
+  }
+
+  revalidatePath('/products')
+  revalidatePath('/deals')
+  return { ok: true, id: data.id }
+}
+
+export async function updateProduct(
+  id: string,
+  input: { name?: string; default_price?: number | null; color?: string; active?: boolean },
+): Promise<ActionResult> {
+  const db = createClient()
+
+  const patch: Record<string, unknown> = {}
+  if (input.name !== undefined) {
+    if (!input.name.trim()) return { ok: false, error: 'أدخل اسم المنتج.' }
+    patch.name = input.name.trim()
+  }
+  if (input.default_price !== undefined) patch.default_price = input.default_price
+  if (input.color !== undefined) patch.color = input.color
+  if (input.active !== undefined) patch.active = input.active
+
+  const { error } = await db.from('products').update(patch).eq('id', id)
+  if (error) return { ok: false, error: FAILED }
+
+  revalidatePath('/products')
+  revalidatePath('/deals')
+  revalidatePath('/subscriptions')
+  return { ok: true }
+}
+
+/**
+ * لا يُحذف منتج له صفقات أو اشتراكات: حذفه يمحو تاريخاً مالياً.
+ * البديل المعروض هو الإيقاف — يختفي من قوائم الاختيار ويبقى ما بُني عليه.
+ */
+export async function deleteProduct(id: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const [{ count: deals }, { count: subs }] = await Promise.all([
+    db.from('deals').select('id', { count: 'exact', head: true }).eq('product_id', id),
+    db.from('subscriptions').select('id', { count: 'exact', head: true }).eq('product_id', id),
+  ])
+
+  if ((deals ?? 0) > 0 || (subs ?? 0) > 0) {
+    return {
+      ok: false,
+      error: `لا يمكن حذف منتج مرتبط بـ ${(deals ?? 0) + (subs ?? 0)} سجلاً. أوقفه بدل حذفه ليختفي من قوائم الاختيار مع بقاء تاريخه.`,
+    }
+  }
+
+  const { error } = await db.from('products').delete().eq('id', id)
+  if (error) return { ok: false, error: FAILED }
+
+  revalidatePath('/products')
+  return { ok: true }
+}
+
 // ---------------------------------------------------------------------------
 // نشاط
 // ---------------------------------------------------------------------------

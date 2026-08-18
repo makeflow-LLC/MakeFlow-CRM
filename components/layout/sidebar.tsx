@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
-  BarChart3, Building2, CreditCard, KanbanSquare, PanelRightClose,
+  BarChart3, Building2, CreditCard, KanbanSquare, Package, PanelRightClose,
   PanelRightOpen, RefreshCw, Sun, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,7 @@ const NAV = [
   { href: '/subscriptions', label: 'الاشتراكات', icon: RefreshCw },
   { href: '/payments', label: 'المدفوعات', icon: CreditCard },
   { href: '/reports', label: 'التقارير', icon: BarChart3 },
+  { href: '/products', label: 'المنتجات', icon: Package },
 ]
 
 export function Sidebar() {

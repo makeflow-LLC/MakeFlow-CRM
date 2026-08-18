@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/hints/empty-state'
 import { Toast } from '@/components/ui/toast'
 import { OwnerAvatar, ProductPill, StuckBadge } from '@/components/shared/bits'
 import { AddDeal } from '@/components/shared/add-dialogs'
+import { DeleteDeal } from './delete-deal'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatMoney, formatNumber } from '@/lib/utils'
 import { STUCK_HOURS } from '@/lib/constants'
@@ -335,12 +336,16 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/contacts/${deal.contact_id}`}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           className="truncate text-sm font-bold text-ink hover:text-accent"
         >
           {deal.contact.full_name}
         </Link>
-        <OwnerAvatar owner={deal.owner} />
+        <div className="flex shrink-0 items-center gap-1">
+          {!overlay && <DeleteDeal dealId={deal.id} />}
+          <OwnerAvatar owner={deal.owner} />
+        </div>
       </div>
 
       <ProductPill product={deal.product} />
