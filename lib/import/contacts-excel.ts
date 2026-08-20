@@ -8,7 +8,7 @@
  * التي لا تستورد شيئاً.
  */
 
-import type { Contact, ContactSource } from '@/lib/types'
+import type { Contact, ContactSource, Product } from '@/lib/types'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -32,6 +32,7 @@ export const TEMPLATE_COLUMNS: ColumnSpec[] = [
   { header: 'الجهة', field: 'organization_name', width: 24, hint: 'اختياري — اسم العيادة أو الشركة' },
   { header: 'الدور في الجهة', field: 'role_in_org', width: 20, hint: 'اختياري — صاحب العيادة، منسّقة…' },
   { header: 'المصدر', field: 'source', width: 18, hint: 'اختياري — بوت واتساب، إعلان فيسبوك، توصية، ورشة، إدخال يدوي' },
+  { header: 'المنتج', field: 'product_name', width: 34, hint: 'اختياري — اسم الدورة أو الخدمة، وتُفتح به صفقة لكل شخص' },
   { header: 'ملاحظات', field: 'notes', width: 32, hint: 'اختياري' },
 ]
 
@@ -44,6 +45,7 @@ export const SAMPLE_ROW = [
   'عيادة النور',
   'مدير',
   'بوت واتساب',
+  'دورة الأتمتة بالذكاء الاصطناعي (n8n)',
   'مهتم بدورة الأتمتة',
 ]
 
@@ -63,6 +65,15 @@ const SOURCE_MAP: Record<string, ContactSource> = {
   'يدوي': 'manual',
   'أخرى': 'other',
   'اخرى': 'other',
+  // ما يكتبه الناس فعلاً حين يصدّرون من أدوات أجنبية
+  'whatsapp': 'whatsapp_bot',
+  'whatsapp bot': 'whatsapp_bot',
+  'facebook': 'facebook_ad',
+  'facebook ad': 'facebook_ad',
+  'referral': 'referral',
+  'workshop': 'workshop',
+  'manual': 'manual',
+  'other': 'other',
 }
 
 // ---------------------------------------------------------------------------
@@ -77,10 +88,20 @@ export interface ImportRow {
   organization_name: string
   role_in_org: string
   source: string
+  product_name: string
   notes: string
 }
 
-export type RowStatus = 'ready' | 'invalid' | 'duplicateInFile' | 'duplicateInSystem'
+export type RowStatus =
+  | 'ready'
+  | 'invalid'
+  | 'duplicateInFile'
+  | 'duplicateInSystem'
+  /**
+   * الشخص موجود سلفاً — إمّا في النظام أو في صفٍّ سابق من الملف نفسه —
+   * والصف يحمل دورة جديدة له. لا نكرّر الشخص، بل نفتح له صفقتها.
+   */
+  | 'dealOnly'
 
 export interface ParsedRow {
   /** رقم الصف في ملف Excel كما يراه المستخدم، ليتمكّن من تصحيحه */
@@ -89,6 +110,12 @@ export interface ParsedRow {
   /** الرقم بعد التوحيد إلى صيغة E.164 */
   normalizedPhone: string
   source: ContactSource
+  /**
+   * معرّفات المنتجات المذكورة في عمود «المنتج».
+   * قائمة لا قيمة واحدة: الطالب الذي درس ثلاث دورات يُكتب في صف واحد
+   * بأسماء مفصولة بفاصلة، فيخرج بثلاث صفقات وشخصٍ واحد.
+   */
+  productIds: string[]
   status: RowStatus
   /** سبب الرفض بالعربية، أو اسم السجل المكرّر */
   message: string
@@ -98,6 +125,8 @@ export interface ParseResult {
   rows: ParsedRow[]
   ready: number
   skipped: number
+  /** كم صفقة ستُفتح مع الاستيراد */
+  deals: number
 }
 
 // ---------------------------------------------------------------------------
@@ -162,7 +191,29 @@ export async function buildTemplate(): Promise<Blob> {
 
 const EMPTY_ROW: ImportRow = {
   full_name: '', phone: '', email: '', city: '',
-  organization_name: '', role_in_org: '', source: '', notes: '',
+  organization_name: '', role_in_org: '', source: '', product_name: '', notes: '',
+}
+
+/**
+ * توحيد اسم المنتج قبل المقارنة.
+ *
+ * الأسماء تُكتب بيد بشر في ملف Excel: مسافات زائدة، وألف بهمزة وبدونها، وتاء
+ * مربوطة مكان الهاء. المطابقة الحرفية كانت سترفض نصف الصفوف لأسباب إملائية
+ * لا علاقة لها بالمقصود.
+ */
+/** الفواصل التي يستعملها الناس فعلاً بين اسمين في خانة واحدة */
+const PRODUCT_SEPARATORS = /[,،;؛\n\r]+|\s\/\s|\s\+\s/
+
+function productKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, '')   // التشكيل
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/[ـ]/g, '')                      // التطويل
+    .replace(/\s+/g, ' ')
 }
 
 const cellText = (value: unknown): string => {
@@ -185,6 +236,7 @@ const cellText = (value: unknown): string => {
 export async function parseContactsFile(
   file: File,
   existing: Pick<Contact, 'id' | 'full_name' | 'phone'>[],
+  products: Pick<Product, 'id' | 'name'>[] = [],
 ): Promise<ParseResult> {
   const ExcelJS = (await import('exceljs')).default
   const wb = new ExcelJS.Workbook()
@@ -201,7 +253,7 @@ export async function parseContactsFile(
   }
 
   const ws = wb.worksheets[0]
-  if (!ws) return { rows: [], ready: 0, skipped: 0 }
+  if (!ws) return { rows: [], ready: 0, skipped: 0, deals: 0 }
 
   // نطابق الأعمدة بترويستها لا بترتيبها، فإعادة ترتيب الأعمدة لا تكسر الاستيراد
   const headerRow = ws.getRow(1)
@@ -217,7 +269,10 @@ export async function parseContactsFile(
   }
 
   const byPhone = new Map(existing.map((c) => [c.phone, c]))
+  const byProduct = new Map(products.map((p) => [productKey(p.name), p]))
   const seenInFile = new Map<string, number>()
+  /** ما حُجز من منتجات لكل رقم في هذا الملف، لمنع تكرار الصفقة نفسها */
+  const claimed = new Map<string, Set<string>>()
   const rows: ParsedRow[] = []
 
   ws.eachRow((row, rowNumber) => {
@@ -238,6 +293,35 @@ export async function parseContactsFile(
     const normalizedPhone = normalizePhone(raw.phone)
     const source = SOURCE_MAP[raw.source.trim()] ?? 'manual'
 
+    /**
+     * عمود المنتج قد يحمل أكثر من دورة، مفصولةً بفاصلة. وقد يتكرّر الشخص
+     * نفسه في صفوف عدّة، صفٌّ لكل دورة، لأن هكذا تُصدَّر الكشوف عادةً.
+     * الحالتان تعنيان الشيء نفسه: شخصٌ واحد وعدّة صفقات — ونقبلهما معاً
+     * بدل إجبار المستخدم على إعادة ترتيب ثمانمئة صف.
+     */
+    const rawNames = raw.product_name
+      .split(PRODUCT_SEPARATORS)
+      .map((n) => n.trim())
+      .filter(Boolean)
+
+    const productIds: string[] = []
+    const unknownNames: string[] = []
+
+    for (const name of rawNames) {
+      const product = byProduct.get(productKey(name))
+      if (!product) {
+        if (!unknownNames.includes(name)) unknownNames.push(name)
+      } else if (!productIds.includes(product.id)) {
+        productIds.push(product.id)
+      }
+    }
+
+    const known = byPhone.get(normalizedPhone) ?? null
+    const earlierRow = seenInFile.get(normalizedPhone)
+    // ما سبق أن حجزناه لهذا الشخص في هذا الملف، حتى لا نفتح صفقتين لدورة واحدة
+    const already = claimed.get(normalizedPhone)
+    const fresh = productIds.filter((id) => !already?.has(id))
+
     let status: RowStatus = 'ready'
     let message = ''
 
@@ -249,22 +333,61 @@ export async function parseContactsFile(
       message = 'رقم الهاتف مفقود'
     } else if (!isValidPhone(raw.phone)) {
       status = 'invalid'
-      message = 'الرقم يجب أن يبدأ بـ ‎+970‎ أو ‎+972‎'
-    } else if (seenInFile.has(normalizedPhone)) {
-      status = 'duplicateInFile'
-      message = `مكرّر مع الصف ${seenInFile.get(normalizedPhone)}`
-    } else if (byPhone.has(normalizedPhone)) {
-      status = 'duplicateInSystem'
-      message = `مسجَّل باسم ${byPhone.get(normalizedPhone)!.full_name}`
+      message = 'أدخل الرقم بمقدّمة بلده، مثل ‎+970599123456‎'
+    } else if (unknownNames.length) {
+      // الرفض هنا مقصود: تمرير الصف بلا دورته يعني ضياعها صامتةً
+      status = 'invalid'
+      message =
+        unknownNames.length === 1
+          ? `لا يوجد منتج بالاسم «${unknownNames[0]}»`
+          : `لا توجد منتجات بالأسماء: ${unknownNames.map((n) => `«${n}»`).join('، ')}`
+    } else if (earlierRow !== undefined || known) {
+      const who = known?.full_name ?? raw.full_name
+      if (fresh.length) {
+        status = 'dealOnly'
+        message = known
+          ? `${who} مسجَّل مسبقاً — ${dealsLabel(fresh.length)} فقط`
+          : `مكرّر مع الصف ${earlierRow} — ${dealsLabel(fresh.length)} فقط`
+      } else if (earlierRow !== undefined) {
+        status = 'duplicateInFile'
+        message = `مكرّر مع الصف ${earlierRow}`
+      } else {
+        status = 'duplicateInSystem'
+        message = `مسجَّل باسم ${who}`
+      }
     }
 
     if (status === 'ready') seenInFile.set(normalizedPhone, rowNumber)
 
-    rows.push({ rowNumber, raw, normalizedPhone, source, status, message })
+    if (status === 'ready' || status === 'dealOnly') {
+      const set = claimed.get(normalizedPhone) ?? new Set<string>()
+      fresh.forEach((id) => set.add(id))
+      claimed.set(normalizedPhone, set)
+    }
+
+    rows.push({
+      rowNumber,
+      raw,
+      normalizedPhone,
+      source,
+      productIds: status === 'ready' || status === 'dealOnly' ? fresh : [],
+      status,
+      message,
+    })
   })
 
   const ready = rows.filter((r) => r.status === 'ready').length
-  return { rows, ready, skipped: rows.length - ready }
+  const dealOnly = rows.filter((r) => r.status === 'dealOnly').length
+  const deals = rows.reduce((sum, r) => sum + r.productIds.length, 0)
+
+  return { rows, ready, skipped: rows.length - ready - dealOnly, deals }
+}
+
+/** «ستُفتح له صفقة واحدة / صفقتان / ٣ صفقات» — بصيغة الجمع العربية */
+function dealsLabel(count: number): string {
+  if (count === 1) return 'ستُفتح له صفقة واحدة'
+  if (count === 2) return 'ستُفتح له صفقتان'
+  return `ستُفتح له ${count} صفقات`
 }
 
 /** مُقسِّم CSV بسيط يحترم علامات الاقتباس المزدوجة */

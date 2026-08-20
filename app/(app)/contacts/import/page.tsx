@@ -27,6 +27,9 @@ export default async function ImportContactsPage() {
           full_name: c.full_name,
           phone: c.phone,
         }))}
+        products={data.products
+          .filter((p) => p.active)
+          .map((p) => ({ id: p.id, name: p.name }))}
         live={isLive()}
       />
     </>

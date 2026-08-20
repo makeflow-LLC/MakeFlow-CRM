@@ -13,13 +13,15 @@ import {
   buildTemplate, parseContactsFile, TEMPLATE_COLUMNS,
   type ParsedRow, type ParseResult, type RowStatus,
 } from '@/lib/import/contacts-excel'
-import { cn, CONTACT, formatNumber, pluralize, ROW } from '@/lib/utils'
-import type { Contact } from '@/lib/types'
+import { cn, CONTACT, DEAL, formatNumber, pluralize, ROW } from '@/lib/utils'
+import { createDealsForImport } from '@/lib/actions'
+import type { Contact, Product } from '@/lib/types'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
 const STATUS_STYLE: Record<RowStatus, string> = {
   ready: 'bg-success/12 text-success',
+  dealOnly: 'bg-accent-soft text-accent',
   invalid: 'bg-danger/10 text-danger',
   duplicateInFile: 'bg-warn/15 text-[#B26A00]',
   duplicateInSystem: 'bg-warn/15 text-[#B26A00]',
@@ -27,9 +29,11 @@ const STATUS_STYLE: Record<RowStatus, string> = {
 
 export function ImportWizard({
   contacts,
+  products,
   live,
 }: {
   contacts: Pick<Contact, 'id' | 'full_name' | 'phone'>[]
+  products: Pick<Product, 'id' | 'name'>[]
   live: boolean
 }) {
   const router = useRouter()
@@ -41,6 +45,7 @@ export function ImportWizard({
   const [reading, setReading] = useState(false)
   const [importing, setImporting] = useState(false)
   const [imported, setImported] = useState<number | null>(null)
+  const [dealsCreated, setDealsCreated] = useState(0)
   const [dragOver, setDragOver] = useState(false)
 
   async function downloadTemplate() {
@@ -78,7 +83,7 @@ export function ImportWizard({
     setFileName(file.name)
     setReading(true)
     try {
-      const parsed = await parseContactsFile(file, contacts)
+      const parsed = await parseContactsFile(file, contacts, products)
       if (!parsed.rows.length) {
         setError(microcopy.errors.fileEmpty)
         return
@@ -98,7 +103,10 @@ export function ImportWizard({
   async function runImport() {
     if (!result) return
     const rows = result.rows.filter((r) => r.status === 'ready')
-    if (!rows.length) return
+    const dealRows = result.rows.filter(
+      (r) => (r.status === 'ready' || r.status === 'dealOnly') && r.productIds.length,
+    )
+    if (!rows.length && !dealRows.length) return
 
     setImporting(true)
     try {
@@ -126,7 +134,7 @@ export function ImportWizard({
           }
         }
 
-        const { error } = await db.from('contacts').insert(
+        const { data: inserted, error } = await db.from('contacts').insert(
           rows.map((r) => ({
             full_name: r.raw.full_name,
             phone: r.normalizedPhone,
@@ -137,8 +145,30 @@ export function ImportWizard({
             source: r.source,
             notes: r.raw.notes || null,
           })),
-        )
+        ).select('id, phone')
         if (error) throw error
+
+        /**
+         * الصفقات بعد الأشخاص، ومرتبطةً بالرقم لا بترتيب الصفوف: الصف قد
+         * يخصّ شخصاً أُنشئ للتوّ، أو شخصاً مسجّلاً من قبل، أو شخصاً ورد في
+         * صفٍّ سابق من الملف نفسه — والرقم هو ما يجمع الثلاثة.
+         */
+        const idByPhone = new Map<string, string>([
+          ...contacts.map((c) => [c.phone, c.id] as const),
+          ...(inserted ?? []).map((c) => [c.phone as string, c.id as string] as const),
+        ])
+
+        const pairs = dealRows.flatMap((r) => {
+          const contactId = idByPhone.get(r.normalizedPhone)
+          if (!contactId) return []
+          return r.productIds.map((product_id) => ({ contact_id: contactId, product_id }))
+        })
+
+        if (pairs.length) {
+          const res = await createDealsForImport(pairs)
+          if (!res.ok) throw new Error(res.error ?? '')
+          setDealsCreated(res.created)
+        }
       }
 
       setImported(rows.length)
@@ -161,7 +191,9 @@ export function ImportWizard({
           title={importHints.done(pluralize(imported, CONTACT))}
           body={
             live
-              ? 'تجدها الآن في قائمة جهات الاتصال.'
+              ? dealsCreated > 0
+                ? `تجدهم في قائمة جهات الاتصال، وفُتحت ${pluralize(dealsCreated, DEAL)} على المنتجات المذكورة في الملف — تراها على لوحة الصفقات.`
+                : 'تجدهم الآن في قائمة جهات الاتصال.'
               : microcopy.demoNote
           }
           action={
@@ -235,6 +267,29 @@ export function ImportWizard({
           <p className="text-xs leading-relaxed text-ink-muted">
             الأعمدة البنفسجية إلزامية. {importHints.phoneNote}
           </p>
+
+          {/* أسماء المنتجات كما هي مسجَّلة — تُنسخ إلى الملف بدل تخمين الإملاء */}
+          {products.length > 0 && (
+            <div className="rounded-input bg-page p-4">
+              <p className="mb-2 text-xs font-bold text-ink">
+                اكتب في عمود «المنتج» أحد هذه الأسماء بالضبط:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {products.map((p) => (
+                  <span
+                    key={p.id}
+                    className="rounded-pill border border-line bg-card px-3 py-1 text-xs font-semibold text-ink"
+                  >
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                من درس أكثر من دورة: اكتب دوراته في الخانة نفسها مفصولةً بفاصلة، أو ضعه في
+                صفٍّ لكل دورة — كلاهما يعطي شخصاً واحداً وصفقةً لكل دورة.
+              </p>
+            </div>
+          )}
         </CardBody>
       </Card>
 
@@ -302,6 +357,9 @@ export function ImportWizard({
             <CardTitle>معاينة قبل الحفظ</CardTitle>
             <span className="text-sm font-semibold text-ink-muted">
               {importHints.summary(pluralize(result.ready, ROW), pluralize(result.skipped, ROW))}
+              {result.deals > 0 && (
+                <> · <span className="text-accent">{pluralize(result.deals, DEAL)}</span> ستُفتح</>
+              )}
             </span>
           </CardHeader>
 
@@ -309,7 +367,7 @@ export function ImportWizard({
             <span className="w-[52px]">الصف</span>
             <span className="flex-1">الاسم</span>
             <span className="w-[150px]">الهاتف</span>
-            <span className="w-[150px]">الجهة</span>
+            <span className="w-[150px]">المنتج</span>
             <span className="w-[220px]">الحالة</span>
           </div>
 
@@ -322,11 +380,14 @@ export function ImportWizard({
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-6 py-4">
             <p className="text-xs leading-relaxed text-ink-muted">
               {result.skipped > 0
-                ? 'الصفوف غير الجاهزة ستُتخطّى ولن تُحفظ. صحّحها في الملف وأعد رفعه إن أردت إدراجها.'
+                ? 'الصفوف غير الجاهزة ستُتخطّى ولن تُحفظ. صحّحها في الملف وأعد رفعه إن أردت إدراجها. أمّا الصفوف الزرقاء فليست متخطّاة: صاحبها مسجَّل مسبقاً وستُفتح له صفقات دوراته فقط.'
                 : 'جميع الصفوف جاهزة.'}
             </p>
             <div className="flex gap-2">
-              <Button onClick={runImport} disabled={importing || result.ready === 0}>
+              <Button
+                onClick={runImport}
+                disabled={importing || (result.ready === 0 && result.deals === 0)}
+              >
                 {importing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -392,8 +453,11 @@ function PreviewRow({ row }: { row: ParsedRow }) {
       <span className="num w-[150px] truncate text-sm text-ink-muted">
         {row.normalizedPhone || row.raw.phone || '—'}
       </span>
-      <span className="hidden w-[150px] truncate text-sm text-ink-muted lg:block">
-        {row.raw.organization_name || '—'}
+      <span
+        className="hidden w-[150px] truncate text-sm text-ink-muted lg:block"
+        title={row.raw.product_name}
+      >
+        {row.raw.product_name || '—'}
       </span>
       <span className="flex w-[220px] items-center gap-2">
         <span className={cn('rounded-pill px-3 py-1 text-xs font-bold', STATUS_STYLE[row.status])}>

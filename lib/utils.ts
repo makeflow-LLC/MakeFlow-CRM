@@ -52,6 +52,7 @@ export const CONTACT = {
   one: 'جهة اتصال واحدة', two: 'جهتا اتصال',
   few: 'جهات اتصال', many: 'جهة اتصال',
 }
+export const DEAL = { one: 'صفقة واحدة', two: 'صفقتان', few: 'صفقات', many: 'صفقة' }
 
 /** مدة منقضية: «قبل ساعتين»، «قبل 3 أيام» */
 export function timeAgo(iso: string | null): string {

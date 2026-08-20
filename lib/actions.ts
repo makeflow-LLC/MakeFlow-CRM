@@ -327,6 +327,80 @@ export async function deleteDeal(dealId: string): Promise<ActionResult> {
   return { ok: true }
 }
 
+/**
+ * فتح صفقات دفعةً واحدة بعد استيراد ملف.
+ *
+ * تُستدعى بعد حفظ الأشخاص، فتتلقّى أزواج (شخص، منتج) وتستنتج لكل زوج مساره
+ * ومرحلته الأولى — وهو المنطق نفسه في createDeal، لكن مقروءاً مرة واحدة
+ * لكل الملف بدل استعلامٍ لكل صف. ثمانمئة صف تعني ثمانمئة رحلة إلى الخادم
+ * لو فُعلت واحدةً واحدة.
+ *
+ * ولا تفشل الدفعة كلها بفشل صف: نُبلغ بعدد ما نجح وما تعذّر.
+ */
+export async function createDealsForImport(
+  pairs: { contact_id: string; product_id: string }[],
+): Promise<{ ok: boolean; created: number; failed: number; error?: string }> {
+  const db = createClient()
+  if (!pairs.length) return { ok: true, created: 0, failed: 0 }
+
+  const [{ data: contacts }, { data: products }, { data: pipelines }, { data: stages }] =
+    await Promise.all([
+      db.from('contacts').select('id, full_name, organization_id, owner_id')
+        .in('id', Array.from(new Set(pairs.map((p) => p.contact_id)))),
+      db.from('products').select('id, name, kind, default_price, currency')
+        .in('id', Array.from(new Set(pairs.map((p) => p.product_id)))),
+      db.from('pipelines').select('id, product_kind'),
+      db.from('pipeline_stages').select('id, pipeline_id, sort_order, is_won, is_lost')
+        .order('sort_order'),
+    ])
+
+  const contactById = new Map((contacts ?? []).map((c) => [c.id, c]))
+  const productById = new Map((products ?? []).map((p) => [p.id, p]))
+  const owner = await currentStaffId(db)
+
+  const rows: Record<string, unknown>[] = []
+  let failed = 0
+
+  for (const pair of pairs) {
+    const contact = contactById.get(pair.contact_id)
+    const product = productById.get(pair.product_id)
+    if (!contact || !product) { failed++; continue }
+
+    // المسار يتبع نوع المنتج، والخدمات تشارك الشركات لوحتها
+    const pipeline =
+      pipelines?.find((p) => p.product_kind === product.kind) ??
+      pipelines?.find((p) => p.product_kind === 'subscription')
+    if (!pipeline) { failed++; continue }
+
+    const firstStage = (stages ?? [])
+      .filter((s) => s.pipeline_id === pipeline.id && !s.is_won && !s.is_lost)
+      .sort((a, b) => a.sort_order - b.sort_order)[0]
+    if (!firstStage) { failed++; continue }
+
+    rows.push({
+      title: `${contact.full_name} — ${product.name}`,
+      contact_id: contact.id,
+      organization_id: contact.organization_id,
+      product_id: product.id,
+      pipeline_id: pipeline.id,
+      stage_id: firstStage.id,
+      value: product.default_price ?? 0,
+      currency: product.currency,
+      owner_id: contact.owner_id ?? owner,
+    })
+  }
+
+  if (!rows.length) return { ok: false, created: 0, failed, error: FAILED }
+
+  const { error } = await db.from('deals').insert(rows)
+  if (error) return { ok: false, created: 0, failed: pairs.length, error: readableError(error.message, 'deal') }
+
+  revalidatePath('/deals')
+  revalidatePath('/contacts')
+  revalidatePath('/')
+  return { ok: true, created: rows.length, failed }
+}
+
 // ---------------------------------------------------------------------------
 // المنتجات
 // ---------------------------------------------------------------------------
