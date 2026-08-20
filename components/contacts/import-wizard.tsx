@@ -149,6 +149,8 @@ export function ImportWizard({
             role_in_org: r.raw.role_in_org || null,
             source: r.source,
             notes: r.raw.notes || null,
+            // عميلٌ منذ متى: تاريخ الصف لا تاريخ رفع الملف
+            ...(r.occurredAt ? { created_at: r.occurredAt } : {}),
           })),
         ).select('id, phone')
         if (error) throw error
@@ -172,6 +174,7 @@ export function ImportWizard({
             stage_id: d.stageId,
             lost_reason: d.lostReason,
             paid_amount: d.paidAmount,
+            occurred_at: d.occurredAt,
           }))
         })
 
@@ -320,6 +323,10 @@ export function ImportWizard({
                     «سبب الخسارة». وإن كتبت المبلغ المدفوع، سُجّل دفعةً مؤكَّدة وظهر في
                     التقارير.
                   </p>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                    ولصفقة قديمة اكتب تاريخها في عمود «تاريخ الصفقة» — بدونه تُحسب كأنها
+                    جرت اليوم، فيقفز دخل هذا الشهر بمالٍ قبضتَه قبل أشهر.
+                  </p>
                 </>
               )}
             </div>
@@ -403,6 +410,7 @@ export function ImportWizard({
             <span className="w-[150px]">الهاتف</span>
             <span className="w-[150px]">المنتج</span>
             <span className="w-[110px]">الحالة</span>
+            <span className="w-[100px]">التاريخ</span>
             <span className="w-[220px]">النتيجة</span>
           </div>
 
@@ -496,6 +504,9 @@ function PreviewRow({ row }: { row: ParsedRow }) {
       </span>
       <span className="hidden w-[110px] truncate text-sm text-ink-muted lg:block">
         {row.raw.stage_name || '—'}
+      </span>
+      <span className="num hidden w-[100px] truncate text-sm text-ink-muted lg:block">
+        {row.occurredAt ?? 'اليوم'}
       </span>
       <span className="flex w-[220px] items-center gap-2">
         <span className={cn('rounded-pill px-3 py-1 text-xs font-bold', STATUS_STYLE[row.status])}>

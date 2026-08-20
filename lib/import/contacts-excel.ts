@@ -47,6 +47,7 @@ export const TEMPLATE_COLUMNS: ColumnSpec[] = [
   { header: 'الحالة', field: 'stage_name', width: 18, hint: 'اختياري — دفع، حضر، خسرناه… وبتركها فارغة تبدأ الصفقة من «جديد»' },
   { header: 'سبب الخسارة', field: 'lost_reason', width: 24, hint: 'إلزامي إن كانت الحالة «خسرناه»' },
   { header: 'المبلغ المدفوع', field: 'paid_amount', width: 16, hint: 'اختياري — ما قبضته فعلاً، ويُسجَّل دفعةً مؤكَّدة' },
+  { header: 'تاريخ الصفقة', field: 'occurred_on', width: 18, hint: 'اختياري — متى جرى ذلك فعلاً: 2026-05-14 أو 14/05/2026. اتركه فارغاً لليوم' },
   { header: 'ملاحظات', field: 'notes', width: 32, hint: 'اختياري' },
 ]
 
@@ -63,6 +64,7 @@ export const SAMPLE_ROW = [
   'دفع',
   '',
   '250',
+  '2026-05-14',
   'مهتم بدورة الأتمتة',
 ]
 
@@ -109,6 +111,7 @@ export interface ImportRow {
   stage_name: string
   lost_reason: string
   paid_amount: string
+  occurred_on: string
   notes: string
 }
 
@@ -130,6 +133,8 @@ export interface ParsedRow {
   /** الرقم بعد التوحيد إلى صيغة E.164 */
   normalizedPhone: string
   source: ContactSource
+  /** تاريخ الصف بصيغة ISO، يُستعمل أيضاً تاريخَ تسجيل الشخص */
+  occurredAt: string | null
   /**
    * الصفقات التي سيولّدها هذا الصف — واحدة لكل دورة ذُكرت فيه.
    * قائمة لا قيمة واحدة: الطالب الذي درس ثلاث دورات يُكتب في صف واحد
@@ -148,6 +153,12 @@ export interface ImportDeal {
   lostReason: string | null
   /** مبلغ يُسجَّل دفعةً مؤكَّدة على الصفقة، إن ذُكر */
   paidAmount: number | null
+  /**
+   * متى جرى هذا فعلاً — بصيغة ISO، أو null فيكون اليوم.
+   * بدونه تُختَم صفقةُ ثلاثة أشهر مضت بتاريخ اليوم، فيقفز دخل الشهر
+   * بمبالغ قُبضت في فصلٍ آخر.
+   */
+  occurredAt: string | null
 }
 
 export interface ParseResult {
@@ -221,7 +232,7 @@ export async function buildTemplate(): Promise<Blob> {
 const EMPTY_ROW: ImportRow = {
   full_name: '', phone: '', email: '', city: '',
   organization_name: '', role_in_org: '', source: '', product_name: '',
-  stage_name: '', lost_reason: '', paid_amount: '', notes: '',
+  stage_name: '', lost_reason: '', paid_amount: '', occurred_on: '', notes: '',
 }
 
 /**
@@ -246,8 +257,71 @@ function productKey(name: string): string {
     .replace(/\s+/g, ' ')
 }
 
+/** تاريخ بصيغة YYYY-MM-DD بالتوقيت المحلي، لا بتوقيت غرينتش */
+function isoDay(d: Date): string {
+  const copy = new Date(d)
+  copy.setMinutes(copy.getMinutes() - copy.getTimezoneOffset())
+  return copy.toISOString().slice(0, 10)
+}
+
+/**
+ * قراءة تاريخ كُتب بيد إنسان.
+ *
+ * الصيغة اليوم-أولاً هي المعتادة هنا (14/05/2026)، وهي أيضاً الملتبسة:
+ * 05/06 قد تعني الخامس من يونيو أو السادس من مايو. نرجّح اليوم أولاً،
+ * إلا أن يكون الرقم الثاني أكبر من اثني عشر فيتعيّن أنه اليوم.
+ *
+ * تُعيد null إن تعذّرت القراءة، فيرفض الصفُّ بدل أن يُختم بتاريخ مخترع.
+ */
+function parseImportDate(text: string): string | null {
+  const t = text.trim()
+  if (!t) return null
+
+  // ISO: 2026-05-14 أو 2026/05/14
+  const iso = t.match(/^(\d{4})[-/](\d{1,2})(?:[-/](\d{1,2}))?$/)
+  if (iso) {
+    const [, y, m, d] = iso
+    return build(Number(y), Number(m), Number(d ?? 1))
+  }
+
+  // شهر وسنة بلا يوم: 05/2026 — من يتذكّر الشهر ولا يتذكّر اليوم
+  const monthYear = t.match(/^(\d{1,2})[-/](\d{4})$/)
+  if (monthYear) {
+    const [, m, y] = monthYear
+    return build(Number(y), Number(m), 1)
+  }
+
+  // محلي: 14/05/2026 أو 14-5-2026
+  const local = t.match(/^(\d{1,2})[-/](\d{1,2})(?:[-/](\d{2,4}))?$/)
+  if (local) {
+    const [, a, b, y] = local
+    const year = y ? normalizeYear(Number(y)) : new Date().getFullYear()
+    const first = Number(a)
+    const second = Number(b)
+    // الثاني أكبر من 12 فهو اليوم حتماً، والأول عندها الشهر
+    if (second > 12 && first <= 12) return build(year, first, second)
+    return build(year, second, first)
+  }
+
+  return null
+}
+
+function normalizeYear(y: number): number {
+  if (y >= 1000) return y
+  return y < 70 ? 2000 + y : 1900 + y
+}
+
+function build(year: number, month: number, day: number): string | null {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null
+  const d = new Date(year, month - 1, day)
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null
+  return isoDay(d)
+}
+
 const cellText = (value: unknown): string => {
   if (value === null || value === undefined) return ''
+  // خانة منسّقة كتاريخ تعود كائن Date لا نصاً، وبدون هذا السطر تُقرأ فارغة
+  if (value instanceof Date) return isoDay(value)
   if (typeof value === 'object') {
     // ExcelJS يعيد كائنات للنص الغني والصيغ والروابط
     const v = value as { text?: string; result?: unknown; richText?: { text: string }[] }
@@ -378,6 +452,13 @@ export async function parseContactsFile(
     const paidAmount = amountText ? Number(amountText) : null
     const amountUnreadable = Boolean(amountRaw) && !(paidAmount !== null && paidAmount > 0)
 
+    const dateRaw = raw.occurred_on.trim()
+    const occurredAt = parseImportDate(dateRaw)
+    const dateUnreadable = Boolean(dateRaw) && !occurredAt
+    // تاريخ في المستقبل يعني غالباً خطأ سنة (2062 بدل 2026)، ولو مرّ لأفسد
+    // تقارير الأشهر القادمة بدخلٍ لم يصل
+    const dateInFuture = Boolean(occurredAt) && occurredAt! > isoDay(new Date())
+
     const known = byPhone.get(normalizedPhone) ?? null
     const earlierRow = seenInFile.get(normalizedPhone)
     // ما سبق أن حجزناه لهذا الشخص في هذا الملف، حتى لا نفتح صفقتين لدورة واحدة
@@ -415,6 +496,12 @@ export async function parseContactsFile(
     } else if (amountUnreadable) {
       status = 'invalid'
       message = `«${amountRaw}» ليس مبلغاً. اكتب الرقم وحده، أو اترك الخانة فارغة.`
+    } else if (dateUnreadable) {
+      status = 'invalid'
+      message = `«${dateRaw}» ليس تاريخاً مقروءاً. اكتبه هكذا: 2026-05-14 أو 14/05/2026.`
+    } else if (dateInFuture) {
+      status = 'invalid'
+      message = `التاريخ «${dateRaw}» في المستقبل. راجع السنة.`
     } else if (earlierRow !== undefined || known) {
       const who = known?.full_name ?? raw.full_name
       if (fresh.length) {
@@ -446,6 +533,7 @@ export async function parseContactsFile(
       raw,
       normalizedPhone,
       source,
+      occurredAt,
       deals: keep
         ? fresh.map((p) => ({
             productId: p.id,
@@ -454,6 +542,7 @@ export async function parseContactsFile(
             // المبلغ يُسجَّل مرة واحدة، على أول صفقة في الصف: صفٌّ بثلاث دورات
             // ومبلغٍ واحد يعني أن المبلغ ثمنُ ما دُفع، لا ثمنَ كلٍّ منها
             paidAmount: p.id === fresh[0]?.id ? paidAmount : null,
+            occurredAt,
           }))
         : [],
       status,

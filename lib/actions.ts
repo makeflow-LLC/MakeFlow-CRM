@@ -346,6 +346,8 @@ export async function createDealsForImport(
     lost_reason?: string | null
     /** دفعة مؤكَّدة تُسجَّل على الصفقة فور إنشائها */
     paid_amount?: number | null
+    /** متى جرى ذلك فعلاً (ISO). غيابه يعني اليوم. */
+    occurred_at?: string | null
   }[],
 ): Promise<{ ok: boolean; created: number; failed: number; error?: string }> {
   const db = createClient()
@@ -367,7 +369,7 @@ export async function createDealsForImport(
   const owner = await currentStaffId(db)
 
   const rows: Record<string, unknown>[] = []
-  const paidBy: (number | null)[] = []
+  const paidBy: { amount: number | null; at: string | null }[] = []
   let failed = 0
 
   for (const pair of pairs) {
@@ -406,8 +408,16 @@ export async function createDealsForImport(
       currency: product.currency,
       owner_id: contact.owner_id ?? owner,
       lost_reason: stage.is_lost ? pair.lost_reason?.trim() || null : null,
+      /**
+       * صفقة قديمة تُختم بتاريخها لا بتاريخ رفع الملف. وإلا ظهرت صفقاتٌ
+       * أُغلقت قبل أشهر وكأنها فُتحت اليوم، وبدت المراحل بلا حركة منذ لحظة
+       * واحدة بينما هي ساكنة منذ فصل.
+       */
+      ...(pair.occurred_at
+        ? { created_at: pair.occurred_at, stage_entered_at: pair.occurred_at }
+        : {}),
     })
-    paidBy.push(pair.paid_amount ?? null)
+    paidBy.push({ amount: pair.paid_amount ?? null, at: pair.occurred_at ?? null })
   }
 
   if (!rows.length) return { ok: false, created: 0, failed, error: FAILED }
@@ -420,14 +430,15 @@ export async function createDealsForImport(
    * «بِعته ولم تقبضه» وكأن المال لم يصل — وهو وصل قبل شهور.
    */
   const payments = (created ?? [])
-    .map((deal, i) => ({ deal, amount: paidBy[i] }))
+    .map((deal, i) => ({ deal, ...paidBy[i] }))
     .filter((x) => x.amount && x.amount > 0)
     .map((x) => ({
       deal_id: x.deal.id,
       amount: x.amount as number,
       method: 'other' as const,
       status: 'paid' as const,
-      paid_at: new Date().toISOString(),
+      // تاريخ القبض الحقيقي: هو ما يحدّد في أي شهر يُحتسب هذا المال
+      paid_at: x.at ? new Date(x.at).toISOString() : new Date().toISOString(),
       verified_by: owner,
       note: 'مستورد من ملف',
     }))
