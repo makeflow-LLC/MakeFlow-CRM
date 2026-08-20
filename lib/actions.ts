@@ -338,7 +338,15 @@ export async function deleteDeal(dealId: string): Promise<ActionResult> {
  * ولا تفشل الدفعة كلها بفشل صف: نُبلغ بعدد ما نجح وما تعذّر.
  */
 export async function createDealsForImport(
-  pairs: { contact_id: string; product_id: string }[],
+  pairs: {
+    contact_id: string
+    product_id: string
+    /** المرحلة المطلوبة، أو غيابها فتبدأ الصفقة من أول مرحلة */
+    stage_id?: string | null
+    lost_reason?: string | null
+    /** دفعة مؤكَّدة تُسجَّل على الصفقة فور إنشائها */
+    paid_amount?: number | null
+  }[],
 ): Promise<{ ok: boolean; created: number; failed: number; error?: string }> {
   const db = createClient()
   if (!pairs.length) return { ok: true, created: 0, failed: 0 }
@@ -359,6 +367,7 @@ export async function createDealsForImport(
   const owner = await currentStaffId(db)
 
   const rows: Record<string, unknown>[] = []
+  const paidBy: (number | null)[] = []
   let failed = 0
 
   for (const pair of pairs) {
@@ -372,10 +381,19 @@ export async function createDealsForImport(
       pipelines?.find((p) => p.product_kind === 'subscription')
     if (!pipeline) { failed++; continue }
 
-    const firstStage = (stages ?? [])
-      .filter((s) => s.pipeline_id === pipeline.id && !s.is_won && !s.is_lost)
+    const inPipeline = (stages ?? []).filter((s) => s.pipeline_id === pipeline.id)
+    const firstStage = inPipeline
+      .filter((s) => !s.is_won && !s.is_lost)
       .sort((a, b) => a.sort_order - b.sort_order)[0]
-    if (!firstStage) { failed++; continue }
+
+    // المرحلة المطلوبة يجب أن تكون من مسار هذا المنتج، وإلا رفضتها قاعدة
+    // البيانات (قاعدة STAGE_PIPELINE_MISMATCH) وسقطت الدفعة كلها
+    const wanted = pair.stage_id
+      ? inPipeline.find((s) => s.id === pair.stage_id) ?? null
+      : null
+
+    const stage = wanted ?? firstStage
+    if (!stage) { failed++; continue }
 
     rows.push({
       title: `${contact.full_name} — ${product.name}`,
@@ -383,20 +401,43 @@ export async function createDealsForImport(
       organization_id: contact.organization_id,
       product_id: product.id,
       pipeline_id: pipeline.id,
-      stage_id: firstStage.id,
+      stage_id: stage.id,
       value: product.default_price ?? 0,
       currency: product.currency,
       owner_id: contact.owner_id ?? owner,
+      lost_reason: stage.is_lost ? pair.lost_reason?.trim() || null : null,
     })
+    paidBy.push(pair.paid_amount ?? null)
   }
 
   if (!rows.length) return { ok: false, created: 0, failed, error: FAILED }
 
-  const { error } = await db.from('deals').insert(rows)
+  const { data: created, error } = await db.from('deals').insert(rows).select('id')
   if (error) return { ok: false, created: 0, failed: pairs.length, error: readableError(error.message, 'deal') }
+
+  /**
+   * الدفعات بعد الصفقات مباشرة. بدونها تظهر ثمانمئة صفقة قديمة في
+   * «بِعته ولم تقبضه» وكأن المال لم يصل — وهو وصل قبل شهور.
+   */
+  const payments = (created ?? [])
+    .map((deal, i) => ({ deal, amount: paidBy[i] }))
+    .filter((x) => x.amount && x.amount > 0)
+    .map((x) => ({
+      deal_id: x.deal.id,
+      amount: x.amount as number,
+      method: 'other' as const,
+      status: 'paid' as const,
+      paid_at: new Date().toISOString(),
+      verified_by: owner,
+      note: 'مستورد من ملف',
+    }))
+
+  if (payments.length) await db.from('payments').insert(payments)
 
   revalidatePath('/deals')
   revalidatePath('/contacts')
+  revalidatePath('/payments')
+  revalidatePath('/reports')
   revalidatePath('/')
   return { ok: true, created: rows.length, failed }
 }

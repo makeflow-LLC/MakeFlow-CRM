@@ -11,11 +11,11 @@ import { EmptyState } from '@/components/hints/empty-state'
 import { importHints, microcopy } from '@/lib/hints'
 import {
   buildTemplate, parseContactsFile, TEMPLATE_COLUMNS,
-  type ParsedRow, type ParseResult, type RowStatus,
+  type ImportProduct, type ParsedRow, type ParseResult, type RowStatus,
 } from '@/lib/import/contacts-excel'
 import { cn, CONTACT, DEAL, formatNumber, pluralize, ROW } from '@/lib/utils'
 import { createDealsForImport } from '@/lib/actions'
-import type { Contact, Product } from '@/lib/types'
+import type { Contact } from '@/lib/types'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
@@ -33,7 +33,7 @@ export function ImportWizard({
   live,
 }: {
   contacts: Pick<Contact, 'id' | 'full_name' | 'phone'>[]
-  products: Pick<Product, 'id' | 'name'>[]
+  products: ImportProduct[]
   live: boolean
 }) {
   const router = useRouter()
@@ -46,6 +46,11 @@ export function ImportWizard({
   const [importing, setImporting] = useState(false)
   const [imported, setImported] = useState<number | null>(null)
   const [dealsCreated, setDealsCreated] = useState(0)
+
+  // أسماء المراحل من كل المسارات، بلا تكرار — لتُنسخ إلى عمود «الحالة»
+  const stageNames = Array.from(
+    new Set(products.flatMap((p) => p.stages.map((s) => s.name))),
+  )
   const [dragOver, setDragOver] = useState(false)
 
   async function downloadTemplate() {
@@ -104,7 +109,7 @@ export function ImportWizard({
     if (!result) return
     const rows = result.rows.filter((r) => r.status === 'ready')
     const dealRows = result.rows.filter(
-      (r) => (r.status === 'ready' || r.status === 'dealOnly') && r.productIds.length,
+      (r) => (r.status === 'ready' || r.status === 'dealOnly') && r.deals.length,
     )
     if (!rows.length && !dealRows.length) return
 
@@ -161,7 +166,13 @@ export function ImportWizard({
         const pairs = dealRows.flatMap((r) => {
           const contactId = idByPhone.get(r.normalizedPhone)
           if (!contactId) return []
-          return r.productIds.map((product_id) => ({ contact_id: contactId, product_id }))
+          return r.deals.map((d) => ({
+            contact_id: contactId,
+            product_id: d.productId,
+            stage_id: d.stageId,
+            lost_reason: d.lostReason,
+            paid_amount: d.paidAmount,
+          }))
         })
 
         if (pairs.length) {
@@ -288,6 +299,29 @@ export function ImportWizard({
                 من درس أكثر من دورة: اكتب دوراته في الخانة نفسها مفصولةً بفاصلة، أو ضعه في
                 صفٍّ لكل دورة — كلاهما يعطي شخصاً واحداً وصفقةً لكل دورة.
               </p>
+
+              {stageNames.length > 0 && (
+                <>
+                  <p className="mb-2 mt-4 text-xs font-bold text-ink">
+                    وفي عمود «الحالة» أحد هذه:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {stageNames.map((name) => (
+                      <span
+                        key={name}
+                        className="rounded-pill border border-line bg-card px-3 py-1 text-xs font-semibold text-ink"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                    اتركها فارغة فتبدأ الصفقة من أول مرحلة. و«خسرناه» تحتاج سبباً في عمود
+                    «سبب الخسارة». وإن كتبت المبلغ المدفوع، سُجّل دفعةً مؤكَّدة وظهر في
+                    التقارير.
+                  </p>
+                </>
+              )}
             </div>
           )}
         </CardBody>
@@ -368,7 +402,8 @@ export function ImportWizard({
             <span className="flex-1">الاسم</span>
             <span className="w-[150px]">الهاتف</span>
             <span className="w-[150px]">المنتج</span>
-            <span className="w-[220px]">الحالة</span>
+            <span className="w-[110px]">الحالة</span>
+            <span className="w-[220px]">النتيجة</span>
           </div>
 
           <div className="max-h-[420px] divide-y divide-line overflow-y-auto scroll-slim">
@@ -458,6 +493,9 @@ function PreviewRow({ row }: { row: ParsedRow }) {
         title={row.raw.product_name}
       >
         {row.raw.product_name || '—'}
+      </span>
+      <span className="hidden w-[110px] truncate text-sm text-ink-muted lg:block">
+        {row.raw.stage_name || '—'}
       </span>
       <span className="flex w-[220px] items-center gap-2">
         <span className={cn('rounded-pill px-3 py-1 text-xs font-bold', STATUS_STYLE[row.status])}>

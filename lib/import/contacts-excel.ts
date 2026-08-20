@@ -8,8 +8,19 @@
  * التي لا تستورد شيئاً.
  */
 
-import type { Contact, ContactSource, Product } from '@/lib/types'
+import type { Contact, ContactSource } from '@/lib/types'
 import { isValidPhone, normalizePhone } from '@/lib/utils'
+
+/**
+ * المنتج كما تحتاجه القراءة: اسمه، ومراحل المسار الذي تسير عليه صفقاته.
+ * المراحل تُمرَّر جاهزة بدل أن يستنتجها القارئ من المسارات، فيبقى هذا الملف
+ * معنيّاً بالملف وحده لا ببنية اللوحة.
+ */
+export interface ImportProduct {
+  id: string
+  name: string
+  stages: { id: string; name: string; isLost: boolean }[]
+}
 
 // ---------------------------------------------------------------------------
 // تعريف القالب
@@ -33,6 +44,9 @@ export const TEMPLATE_COLUMNS: ColumnSpec[] = [
   { header: 'الدور في الجهة', field: 'role_in_org', width: 20, hint: 'اختياري — صاحب العيادة، منسّقة…' },
   { header: 'المصدر', field: 'source', width: 18, hint: 'اختياري — بوت واتساب، إعلان فيسبوك، توصية، ورشة، إدخال يدوي' },
   { header: 'المنتج', field: 'product_name', width: 34, hint: 'اختياري — اسم الدورة أو الخدمة، وتُفتح به صفقة لكل شخص' },
+  { header: 'الحالة', field: 'stage_name', width: 18, hint: 'اختياري — دفع، حضر، خسرناه… وبتركها فارغة تبدأ الصفقة من «جديد»' },
+  { header: 'سبب الخسارة', field: 'lost_reason', width: 24, hint: 'إلزامي إن كانت الحالة «خسرناه»' },
+  { header: 'المبلغ المدفوع', field: 'paid_amount', width: 16, hint: 'اختياري — ما قبضته فعلاً، ويُسجَّل دفعةً مؤكَّدة' },
   { header: 'ملاحظات', field: 'notes', width: 32, hint: 'اختياري' },
 ]
 
@@ -46,6 +60,9 @@ export const SAMPLE_ROW = [
   'مدير',
   'بوت واتساب',
   'دورة الأتمتة بالذكاء الاصطناعي (n8n)',
+  'دفع',
+  '',
+  '250',
   'مهتم بدورة الأتمتة',
 ]
 
@@ -89,6 +106,9 @@ export interface ImportRow {
   role_in_org: string
   source: string
   product_name: string
+  stage_name: string
+  lost_reason: string
+  paid_amount: string
   notes: string
 }
 
@@ -111,14 +131,23 @@ export interface ParsedRow {
   normalizedPhone: string
   source: ContactSource
   /**
-   * معرّفات المنتجات المذكورة في عمود «المنتج».
+   * الصفقات التي سيولّدها هذا الصف — واحدة لكل دورة ذُكرت فيه.
    * قائمة لا قيمة واحدة: الطالب الذي درس ثلاث دورات يُكتب في صف واحد
    * بأسماء مفصولة بفاصلة، فيخرج بثلاث صفقات وشخصٍ واحد.
    */
-  productIds: string[]
+  deals: ImportDeal[]
   status: RowStatus
   /** سبب الرفض بالعربية، أو اسم السجل المكرّر */
   message: string
+}
+
+export interface ImportDeal {
+  productId: string
+  /** المرحلة المطلوبة، أو null فتبدأ الصفقة من أول مرحلة في مسارها */
+  stageId: string | null
+  lostReason: string | null
+  /** مبلغ يُسجَّل دفعةً مؤكَّدة على الصفقة، إن ذُكر */
+  paidAmount: number | null
 }
 
 export interface ParseResult {
@@ -191,7 +220,8 @@ export async function buildTemplate(): Promise<Blob> {
 
 const EMPTY_ROW: ImportRow = {
   full_name: '', phone: '', email: '', city: '',
-  organization_name: '', role_in_org: '', source: '', product_name: '', notes: '',
+  organization_name: '', role_in_org: '', source: '', product_name: '',
+  stage_name: '', lost_reason: '', paid_amount: '', notes: '',
 }
 
 /**
@@ -236,7 +266,7 @@ const cellText = (value: unknown): string => {
 export async function parseContactsFile(
   file: File,
   existing: Pick<Contact, 'id' | 'full_name' | 'phone'>[],
-  products: Pick<Product, 'id' | 'name'>[] = [],
+  products: ImportProduct[] = [],
 ): Promise<ParseResult> {
   const ExcelJS = (await import('exceljs')).default
   const wb = new ExcelJS.Workbook()
@@ -304,23 +334,55 @@ export async function parseContactsFile(
       .map((n) => n.trim())
       .filter(Boolean)
 
-    const productIds: string[] = []
+    const matched: ImportProduct[] = []
     const unknownNames: string[] = []
 
     for (const name of rawNames) {
       const product = byProduct.get(productKey(name))
       if (!product) {
         if (!unknownNames.includes(name)) unknownNames.push(name)
-      } else if (!productIds.includes(product.id)) {
-        productIds.push(product.id)
+      } else if (!matched.some((p) => p.id === product.id)) {
+        matched.push(product)
       }
     }
+
+    /**
+     * الحالة تُطابَق داخل مسار المنتج نفسه، لا في النظام كله: «تعاقد» مرحلةٌ
+     * في مسار الشركات ولا وجود لها في مسار الأكاديمية. ولو قُبلت مرحلةٌ من
+     * مسار آخر لرفضتها قاعدة البيانات لاحقاً برسالة لا يفهمها أحد.
+     */
+    const stageName = raw.stage_name.trim()
+    const reason = raw.lost_reason.trim()
+    const stageErrors: string[] = []
+    const stageByProduct = new Map<string, { id: string; isLost: boolean } | null>()
+
+    if (stageName) {
+      for (const product of matched) {
+        const stage = product.stages.find((st) => productKey(st.name) === productKey(stageName))
+        if (!stage) {
+          const options = product.stages.map((st) => st.name).join('، ')
+          stageErrors.push(`«${stageName}» ليست مرحلة في مسار ${product.name} — المتاح: ${options}`)
+          stageByProduct.set(product.id, null)
+        } else {
+          stageByProduct.set(product.id, { id: stage.id, isLost: stage.isLost })
+        }
+      }
+    }
+
+    // مرحلة الخسارة بلا سبب ترفضها قاعدة البيانات، فنمنعها هنا بلغة مفهومة
+    const needsReason = Array.from(stageByProduct.values()).some((st) => st?.isLost)
+    // خانة مكتوبة لا يخرج منها رقم («صفر»، «تم») يجب أن تُرفض لا أن تُهمَل:
+    // إهمالها يعني استيراد الطالب بلا دفعته دون أن يظهر ذلك في المعاينة
+    const amountRaw = raw.paid_amount.trim()
+    const amountText = amountRaw.replace(/[^\d.]/g, '')
+    const paidAmount = amountText ? Number(amountText) : null
+    const amountUnreadable = Boolean(amountRaw) && !(paidAmount !== null && paidAmount > 0)
 
     const known = byPhone.get(normalizedPhone) ?? null
     const earlierRow = seenInFile.get(normalizedPhone)
     // ما سبق أن حجزناه لهذا الشخص في هذا الملف، حتى لا نفتح صفقتين لدورة واحدة
     const already = claimed.get(normalizedPhone)
-    const fresh = productIds.filter((id) => !already?.has(id))
+    const fresh = matched.filter((p) => !already?.has(p.id))
 
     let status: RowStatus = 'ready'
     let message = ''
@@ -341,6 +403,18 @@ export async function parseContactsFile(
         unknownNames.length === 1
           ? `لا يوجد منتج بالاسم «${unknownNames[0]}»`
           : `لا توجد منتجات بالأسماء: ${unknownNames.map((n) => `«${n}»`).join('، ')}`
+    } else if (stageName && !matched.length) {
+      status = 'invalid'
+      message = 'كتبتَ الحالة دون منتج. الحالة تصف صفقة، والصفقة تحتاج منتجاً.'
+    } else if (stageErrors.length) {
+      status = 'invalid'
+      message = stageErrors[0]
+    } else if (needsReason && !reason) {
+      status = 'invalid'
+      message = 'الحالة «خسرناه» تحتاج سبباً في عمود «سبب الخسارة».'
+    } else if (amountUnreadable) {
+      status = 'invalid'
+      message = `«${amountRaw}» ليس مبلغاً. اكتب الرقم وحده، أو اترك الخانة فارغة.`
     } else if (earlierRow !== undefined || known) {
       const who = known?.full_name ?? raw.full_name
       if (fresh.length) {
@@ -359,9 +433,11 @@ export async function parseContactsFile(
 
     if (status === 'ready') seenInFile.set(normalizedPhone, rowNumber)
 
-    if (status === 'ready' || status === 'dealOnly') {
+    const keep = status === 'ready' || status === 'dealOnly'
+
+    if (keep) {
       const set = claimed.get(normalizedPhone) ?? new Set<string>()
-      fresh.forEach((id) => set.add(id))
+      fresh.forEach((p) => set.add(p.id))
       claimed.set(normalizedPhone, set)
     }
 
@@ -370,7 +446,16 @@ export async function parseContactsFile(
       raw,
       normalizedPhone,
       source,
-      productIds: status === 'ready' || status === 'dealOnly' ? fresh : [],
+      deals: keep
+        ? fresh.map((p) => ({
+            productId: p.id,
+            stageId: stageByProduct.get(p.id)?.id ?? null,
+            lostReason: stageByProduct.get(p.id)?.isLost ? reason : null,
+            // المبلغ يُسجَّل مرة واحدة، على أول صفقة في الصف: صفٌّ بثلاث دورات
+            // ومبلغٍ واحد يعني أن المبلغ ثمنُ ما دُفع، لا ثمنَ كلٍّ منها
+            paidAmount: p.id === fresh[0]?.id ? paidAmount : null,
+          }))
+        : [],
       status,
       message,
     })
@@ -378,7 +463,7 @@ export async function parseContactsFile(
 
   const ready = rows.filter((r) => r.status === 'ready').length
   const dealOnly = rows.filter((r) => r.status === 'dealOnly').length
-  const deals = rows.reduce((sum, r) => sum + r.productIds.length, 0)
+  const deals = rows.reduce((sum, r) => sum + r.deals.length, 0)
 
   return { rows, ready, skipped: rows.length - ready - dealOnly, deals }
 }

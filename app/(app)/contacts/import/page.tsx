@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { PageHeader } from '@/components/hints/page-header'
 import { ImportWizard } from '@/components/contacts/import-wizard'
-import { getDataset, isLive } from '@/lib/data'
+import { buildImportProducts, getDataset, isLive } from '@/lib/data'
 import { pageHints } from '@/lib/hints'
 
 export default async function ImportContactsPage() {
@@ -27,9 +27,7 @@ export default async function ImportContactsPage() {
           full_name: c.full_name,
           phone: c.phone,
         }))}
-        products={data.products
-          .filter((p) => p.active)
-          .map((p) => ({ id: p.id, name: p.name }))}
+        products={buildImportProducts(data)}
         live={isLive()}
       />
     </>

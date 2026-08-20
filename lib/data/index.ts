@@ -14,6 +14,7 @@ import type {
   SubscriptionRow, Task, TodayStats, User,
 } from '@/lib/types'
 import { STUCK_HOURS } from '@/lib/constants'
+import type { ImportProduct } from '@/lib/import/contacts-excel'
 import * as mock from './mock'
 
 export interface Dataset {
@@ -160,6 +161,32 @@ export function stagesFor(data: Dataset, pipelineId: string): Stage[] {
   return data.stages
     .filter((s) => s.pipeline_id === pipelineId)
     .sort((a, b) => a.sort_order - b.sort_order)
+}
+
+/**
+ * المنتجات مع مراحل مساراتها — ما يحتاجه استيراد Excel للتحقق من عمود
+ * «الحالة». المسار يتبع نوع المنتج، والخدمات تشارك الشركات لوحتها، وهي
+ * القاعدة نفسها المطبَّقة عند فتح أي صفقة.
+ */
+export function buildImportProducts(data: Dataset): ImportProduct[] {
+  return data.products
+    .filter((p) => p.active)
+    .map((p) => {
+      const pipeline =
+        data.pipelines.find((pl) => pl.product_kind === p.kind) ??
+        data.pipelines.find((pl) => pl.product_kind === 'subscription')
+
+      return {
+        id: p.id,
+        name: p.name,
+        stages: pipeline
+          ? data.stages
+              .filter((s) => s.pipeline_id === pipeline.id)
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map((s) => ({ id: s.id, name: s.name, isLost: s.is_lost }))
+          : [],
+      }
+    })
 }
 
 export function buildContactRows(data: Dataset, query = ''): ContactRow[] {
