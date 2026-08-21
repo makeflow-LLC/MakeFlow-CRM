@@ -8,7 +8,7 @@ import { SubscriptionActions } from '@/components/subscriptions/subscription-act
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { buildSubscriptionRows, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
-import { cn, daysLabel, formatMoney, formatNumber } from '@/lib/utils'
+import { cn, daysLabel, formatMoney, formatNumber, toBase } from '@/lib/utils'
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'فعّال',
@@ -19,8 +19,9 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function SubscriptionsPage() {
   const data = await getDataset()
   const rows = buildSubscriptionRows(data)
+  const base = data.money.base
   const active = rows.filter((s) => s.status === 'active')
-  const mrr = active.reduce((sum, s) => sum + s.monthly_amount, 0)
+  const mrr = active.reduce((sum, s) => sum + toBase(s.monthly_amount, s.currency, data.money), 0)
   const renewalsSoon = active.filter(
     (s) => s.days_until_renewal !== null && s.days_until_renewal >= 0 && s.days_until_renewal <= 7,
   ).length
@@ -32,7 +33,7 @@ export default async function SubscriptionsPage() {
     active.reduce<Record<string, { name: string; color: string; amount: number }>>((acc, s) => {
       const key = s.product.id
       acc[key] ??= { name: s.product.name, color: s.product.color, amount: 0 }
-      acc[key].amount += s.monthly_amount
+      acc[key].amount += toBase(s.monthly_amount, s.currency, data.money)
       return acc
     }, {}),
   ).sort((a, b) => b.amount - a.amount)
@@ -63,8 +64,9 @@ export default async function SubscriptionsPage() {
                 <HintTooltip term="mrr" />
               </p>
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pb-1.5">
-                <span className="num text-[40px] font-bold leading-none">{formatNumber(mrr)}</span>
-                <span className="text-body text-nav-muted">₪</span>
+                <span className="num text-[40px] font-bold leading-none">
+                  {formatMoney(Math.round(mrr), base)}
+                </span>
                 <span className="num rounded-pill bg-[#12B76A]/20 px-2 py-0.5 text-chip font-semibold text-[#6CE9A6]">
                   {formatNumber(active.length)} فعّال
                 </span>
@@ -84,7 +86,7 @@ export default async function SubscriptionsPage() {
                   {byProduct.map((p) => (
                     <div
                       key={p.name}
-                      title={`${p.name}: ${formatMoney(p.amount)}`}
+                      title={`${p.name}: ${formatMoney(p.amount, base)}`}
                       style={{ width: `${(p.amount / mrr) * 100}%`, backgroundColor: p.color }}
                     />
                   ))}
@@ -94,7 +96,7 @@ export default async function SubscriptionsPage() {
                     <span key={p.name} className="flex items-center gap-1.5 text-faint">
                       <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: p.color }} />
                       <span className="font-semibold text-ink">{p.name}</span>
-                      <span className="num text-ink-muted">{formatMoney(p.amount)}</span>
+                      <span className="num text-ink-muted">{formatMoney(p.amount, base)}</span>
                     </span>
                   ))}
                 </div>

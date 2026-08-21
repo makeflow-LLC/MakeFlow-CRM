@@ -267,7 +267,7 @@ function DealForm({
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="qa-value">قيمة الصفقة (شيكل)</Label>
+        <Label htmlFor="qa-value">قيمة الصفقة</Label>
         <Input
           id="qa-value"
           value={value}

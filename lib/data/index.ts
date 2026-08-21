@@ -14,10 +14,17 @@ import type {
   SubscriptionRow, Task, TodayStats, User,
 } from '@/lib/types'
 import { STUCK_HOURS } from '@/lib/constants'
+import {
+  DEFAULT_MONEY, fromBase, toBase, type CurrencyRate, type MoneySettings,
+} from '@/lib/money'
 import type { ImportProduct } from '@/lib/import/contacts-excel'
 import * as mock from './mock'
 
 export interface Dataset {
+  /** عملة الأساس وأسعار الصرف — كل مجموع في التطبيق يمرّ بها */
+  money: MoneySettings
+  /** صفوف الأسعار كما هي، لشاشة تحريرها */
+  rates: CurrencyRate[]
   users: User[]
   products: Product[]
   pipelines: Pipeline[]
@@ -55,6 +62,11 @@ export function isLive(): boolean {
 }
 
 const mockDataset = (): Dataset => ({
+  money: { base: 'USD', rates: { USD: 1, ILS: 3.7 } },
+  rates: [
+    { code: 'USD', units_per_base: 1, updated_at: new Date().toISOString() },
+    { code: 'ILS', units_per_base: 3.7, updated_at: new Date().toISOString() },
+  ],
   users: mock.users,
   products: mock.products,
   pipelines: mock.pipelines,
@@ -70,6 +82,8 @@ const mockDataset = (): Dataset => ({
 
 /** `cache` تجعل الطلب الواحد يجيب البيانات مرة وحدة مهما تعددت الكمبوننتس. */
 const emptyDataset = (): Dataset => ({
+  money: DEFAULT_MONEY,
+  rates: [],
   users: [], products: [], pipelines: [], stages: [], organizations: [],
   contacts: [], deals: [], activities: [], tasks: [], payments: [], subscriptions: [],
 })
@@ -91,6 +105,20 @@ export const getDataset = cache(async (): Promise<Dataset> => {
 
   const results = await Promise.all(tables.map((t) => db.from(t).select('*')))
 
+  // الإعدادات وأسعار الصرف: غيابهما لا يوقف الشاشة، بل يعيدها إلى الافتراضي
+  const [{ data: settings }, { data: rates }] = await Promise.all([
+    db.from('app_settings').select('base_currency').maybeSingle(),
+    db.from('currency_rates').select('code, units_per_base, updated_at'),
+  ])
+
+  const money: MoneySettings = {
+    base: settings?.base_currency ?? DEFAULT_MONEY.base,
+    rates: Object.fromEntries(
+      (rates ?? []).map((r) => [r.code as string, Number(r.units_per_base)]),
+    ),
+  }
+  money.rates[money.base] = 1
+
   const failed = results.find((r) => r.error)
   if (failed?.error) {
     // لا نعرض بيانات تجريبية هنا أبداً: المستخدم ضبط المفاتيح فهو يتوقّع بياناته
@@ -111,6 +139,12 @@ export const getDataset = cache(async (): Promise<Dataset> => {
   ] = results.map((r) => r.data ?? [])
 
   return {
+    money,
+    rates: (rates ?? []).map((r) => ({
+      code: r.code as string,
+      units_per_base: Number(r.units_per_base),
+      updated_at: (r as { updated_at?: string }).updated_at ?? new Date().toISOString(),
+    })),
     users, products, pipelines, stages, organizations,
     contacts, deals, activities, tasks, payments, subscriptions,
   } as Dataset
@@ -128,10 +162,24 @@ export const hoursSince = (iso: string) =>
 
 export { STUCK_HOURS } from '@/lib/constants'
 
-export const paidTotalFor = (dealId: string, payments: Payment[]) =>
+/**
+ * المسدَّد على صفقة، بعملة الأساس.
+ *
+ * الجمع يتم على `amount_base` لا على `amount`: دفعتان إحداهما بالشيكل
+ * والأخرى بالدولار لا تُجمعان، وقد كانتا تُجمعان قبل هذا.
+ */
+export const paidBaseFor = (dealId: string, payments: Payment[]) =>
   payments
     .filter((p) => p.deal_id === dealId && p.status === 'paid')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + (p.amount_base ?? p.amount), 0)
+
+/** ونفسه معروضاً بعملة الصفقة، ليُطرح من قيمتها */
+export const paidTotalFor = (
+  dealId: string,
+  payments: Payment[],
+  money: MoneySettings,
+  currency: string,
+) => fromBase(paidBaseFor(dealId, payments), currency, money)
 
 // ---------------------------------------------------------------------------
 // دوال الشاشات
@@ -152,7 +200,9 @@ export function buildDealCards(data: Dataset, pipelineId?: string): DealCard[] {
       stage: stages.get(d.stage_id)!,
       owner: d.owner_id ? users.get(d.owner_id) ?? null : null,
       hours_in_stage: hoursSince(d.stage_entered_at),
-      paid_total: paidTotalFor(d.id, data.payments),
+      paid_total: paidTotalFor(d.id, data.payments, data.money, d.currency),
+      value_base: toBase(d.value, d.currency, data.money),
+      paid_total_base: paidBaseFor(d.id, data.payments),
     }))
     .filter((d) => d.contact && d.product && d.stage)
 }
@@ -303,7 +353,7 @@ export function buildStats(data: Dataset): TodayStats {
       const at = new Date(p.paid_at)
       return at.getFullYear() === now.getFullYear() && at.getMonth() === now.getMonth()
     })
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + (p.amount_base ?? p.amount), 0)
 
   // صفقة في مرحلة «دفع» أو مرحلة ناجحة تعني أنك اعتبرت البيع تامّاً. الفرق بين
   // قيمتها وما وصل منها فعلاً هو المال المعلّق: بِعتَه ولم تقبضه بعد.
@@ -312,17 +362,21 @@ export function buildStats(data: Dataset): TodayStats {
   )
   const uncollected = data.deals
     .filter((d) => d.status !== 'lost' && (closedStageIds.has(d.stage_id) || d.status === 'won'))
-    .reduce((sum, d) => sum + Math.max(d.value - paidTotalFor(d.id, data.payments), 0), 0)
+    .reduce(
+      (sum, d) =>
+        sum + Math.max(toBase(d.value, d.currency, data.money) - paidBaseFor(d.id, data.payments), 0),
+      0,
+    )
 
   return {
     open_deals: openDeals.length,
-    open_value: openDeals.reduce((sum, d) => sum + d.value, 0),
+    open_value: openDeals.reduce((sum, d) => sum + toBase(d.value, d.currency, data.money), 0),
     awaiting_payment: openDeals.filter((d) => awaitingStageIds.has(d.stage_id)).length,
     collected_this_month,
     uncollected,
     mrr: data.subscriptions
       .filter((s) => s.status === 'active')
-      .reduce((sum, s) => sum + s.monthly_amount, 0),
+      .reduce((sum, s) => sum + toBase(s.monthly_amount, s.currency, data.money), 0),
     renewals_this_month: data.subscriptions.filter(
       (s) =>
         s.status === 'active' &&
@@ -385,7 +439,7 @@ export function buildOrganizationCards(data: Dataset) {
     }))
     .map((org) => ({
       ...org,
-      mrr: org.subscriptions.reduce((sum, s) => sum + s.monthly_amount, 0),
+      mrr: org.subscriptions.reduce((sum, s) => sum + toBase(s.monthly_amount, s.currency, data.money), 0),
     }))
 }
 
@@ -426,7 +480,7 @@ export function buildReports(data: Dataset) {
         count: inStage.length,
         // المال في كل مرحلة، لا عدد البطاقات وحده: عشر صفقات صغيرة في مرحلة
         // متأخرة ليست كصفقتين كبيرتين، والعدد وحده يخفي هذا الفرق.
-        value: inStage.reduce((sum, d) => sum + d.value, 0),
+        value: inStage.reduce((sum, d) => sum + toBase(d.value, d.currency, data.money), 0),
       }
     }),
   }))
@@ -450,7 +504,7 @@ export function buildReports(data: Dataset) {
       const dealIds = new Set(data.deals.filter((d) => d.product_id === p.id).map((d) => d.id))
       const revenue = data.payments
         .filter((pay) => pay.status === 'paid' && dealIds.has(pay.deal_id))
-        .reduce((s, pay) => s + pay.amount, 0)
+        .reduce((s, pay) => s + (pay.amount_base ?? pay.amount), 0)
       return { name: p.name, color: p.color, revenue }
     })
     .filter((r) => r.revenue > 0)
@@ -460,7 +514,7 @@ export function buildReports(data: Dataset) {
     .filter((s) => s.status === 'active')
     .reduce<Record<string, number>>((acc, s) => {
       const name = products.get(s.product_id)?.name ?? '—'
-      acc[name] = (acc[name] ?? 0) + s.monthly_amount
+      acc[name] = (acc[name] ?? 0) + toBase(s.monthly_amount, s.currency, data.money)
       return acc
     }, {})
 
@@ -470,30 +524,24 @@ export function buildReports(data: Dataset) {
    * عرض المقبوض وحده — وهو ما كانت عليه هذه الشاشة — يجعل عملاً كاملاً
    * يبدو كأنه لم يحدث ما دامت الدفعة لم تُسجَّل بعد.
    */
-  const wonValue = data.deals
-    .filter((d) => d.status === 'won')
-    .reduce((sum, d) => sum + d.value, 0)
+  const base = (d: { value: number; currency: string }) => toBase(d.value, d.currency, data.money)
 
-  const openValue = data.deals
-    .filter((d) => d.status === 'open')
-    .reduce((sum, d) => sum + d.value, 0)
-
-  const lostValue = data.deals
-    .filter((d) => d.status === 'lost')
-    .reduce((sum, d) => sum + d.value, 0)
+  const wonValue = data.deals.filter((d) => d.status === 'won').reduce((s, d) => s + base(d), 0)
+  const openValue = data.deals.filter((d) => d.status === 'open').reduce((s, d) => s + base(d), 0)
+  const lostValue = data.deals.filter((d) => d.status === 'lost').reduce((s, d) => s + base(d), 0)
 
   const collected = data.payments
     .filter((p) => p.status === 'paid')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + (p.amount_base ?? p.amount), 0)
 
   const closedStageIds = new Set(
     data.stages.filter((s) => s.is_paid_stage || s.is_won).map((s) => s.id),
   )
   const uncollected = data.deals
     .filter((d) => d.status !== 'lost' && (closedStageIds.has(d.stage_id) || d.status === 'won'))
-    .reduce((sum, d) => sum + Math.max(d.value - paidTotalFor(d.id, data.payments), 0), 0)
+    .reduce((sum, d) => sum + Math.max(base(d) - paidBaseFor(d.id, data.payments), 0), 0)
 
-  const money = { openValue, wonValue, lostValue, collected, uncollected }
+  const totals = { openValue, wonValue, lostValue, collected, uncollected }
 
   const lostReasons = data.deals
     .filter((d) => d.status === 'lost' && d.lost_reason)
@@ -518,6 +566,6 @@ export function buildReports(data: Dataset) {
       .map(([reason, count]) => ({ reason, count }))
       .sort((a, b) => b.count - a.count),
     totalRevenue: revenueByProduct.reduce((s, r) => s + r.revenue, 0),
-    money,
+    money: totals,
   }
 }

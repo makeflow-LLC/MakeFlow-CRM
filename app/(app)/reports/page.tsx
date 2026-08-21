@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { HtmlBars, MonthlyRevenueChart } from '@/components/shared/report-charts'
 import { StatCard } from '@/components/shared/bits'
+import { CurrencyCard } from '@/components/reports/currency-card'
 import { Chip } from '@/components/ui/pill'
 import { buildReports, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
@@ -17,6 +18,7 @@ const AR_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'ما
 export default async function ReportsPage() {
   const data = await getDataset()
   const r = buildReports(data)
+  const base = data.money.base
 
   // الإيراد الفعلي لكل شهر من آخر 6 شهور
   const monthly: { month: string; revenue: number }[] = []
@@ -29,7 +31,7 @@ export default async function ReportsPage() {
         const paid = new Date(p.paid_at)
         return paid.getFullYear() === d.getFullYear() && paid.getMonth() === d.getMonth()
       })
-      .reduce((s, p) => s + p.amount, 0)
+      .reduce((s, p) => s + (p.amount_base ?? p.amount), 0)
     monthly.push({ month: AR_MONTHS[d.getMonth()], revenue })
   }
 
@@ -53,25 +55,27 @@ export default async function ReportsPage() {
     <>
       <PageHeader title="التقارير" hint={pageHints.reports} />
 
+      <CurrencyCard base={base} rates={data.rates} />
+
       {/* المال أولاً: من المتوقَّع إلى المقبوض، والفجوة بينهما ظاهرة */}
       <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
         <StatCard
-          label="قيمة الصفقات المفتوحة" value={r.money.openValue} suffix="ILS" tone="accent"
+          label="قيمة الصفقات المفتوحة" value={r.money.openValue} currency={base} tone="accent"
           icon={<HandCoins className="h-4 w-4" />}
           sub="مال متوقَّع، لم يُحسم بعد"
         />
         <StatCard
-          label="قيمة الصفقات الناجحة" value={r.money.wonValue} suffix="ILS"
+          label="قيمة الصفقات الناجحة" value={r.money.wonValue} currency={base}
           icon={<Trophy className="h-4 w-4" />}
           sub="ما اتُّفق عليه فعلاً"
         />
         <StatCard
-          label="المقبوض" value={r.money.collected} suffix="ILS" tone="success"
+          label="المقبوض" value={r.money.collected} currency={base} tone="success"
           icon={<Wallet className="h-4 w-4" />}
           sub="دفعات مؤكَّدة دخلت الصندوق"
         />
         <StatCard
-          label="بِعته ولم تقبضه" value={r.money.uncollected} suffix="ILS" tone="warn"
+          label="بِعته ولم تقبضه" value={r.money.uncollected} currency={base} tone="warn"
           icon={<Banknote className="h-4 w-4" />}
           sub="الفرق بين ما بِعته وما سجّلت قبضه"
         />
@@ -108,7 +112,7 @@ export default async function ReportsPage() {
                 <HintTooltip term="stage" />
               </CardTitle>
               <span className="num text-sm font-bold text-ink">
-                {formatMoney(p.stages.reduce((sum, s) => sum + s.value, 0))}
+                {formatMoney(p.stages.reduce((sum, s) => sum + s.value, 0), base)}
               </span>
             </CardHeader>
             <CardBody className="space-y-6">
@@ -117,7 +121,7 @@ export default async function ReportsPage() {
                 <HtmlBars rows={p.stages.map((s) => ({ name: s.name, color: s.color, value: s.count }))} />
               </div>
               <div>
-                <p className="mb-2 text-xs font-bold text-ink-muted">قيمتها بالشيكل</p>
+                <p className="mb-2 text-xs font-bold text-ink-muted">قيمتها بـ{base}</p>
                 <HtmlBars
                   format="money"
                   rows={p.stages.map((s) => ({ name: s.name, color: s.color, value: s.value }))}
@@ -133,7 +137,7 @@ export default async function ReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle>المقبوض حسب المنتج</CardTitle>
-            <span className="num text-sm font-bold text-ink">{formatMoney(r.totalRevenue)}</span>
+            <span className="num text-sm font-bold text-ink">{formatMoney(r.totalRevenue, base)}</span>
           </CardHeader>
           <CardBody>
             <HtmlBars

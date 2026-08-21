@@ -256,7 +256,7 @@ export function AddDeal({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="ad-value">قيمة الصفقة (شيكل)</Label>
+            <Label htmlFor="ad-value">قيمة الصفقة</Label>
             <Input
               id="ad-value" value={value} className="num text-right"
               onChange={(e) => setValue(e.target.value)}
@@ -396,7 +396,7 @@ export function AddSubscription({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="as-amount">المبلغ الشهري (شيكل)</Label>
+            <Label htmlFor="as-amount">المبلغ الشهري</Label>
             <Input
               id="as-amount" value={amount} className="num text-right"
               onChange={(e) => setAmount(e.target.value)}

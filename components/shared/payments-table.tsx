@@ -12,6 +12,7 @@ import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { emptyStates, microcopy } from '@/lib/hints'
 import { cn, formatDate, formatMoney } from '@/lib/utils'
 import { AddPayment } from '@/components/payments/add-payment'
+import type { MoneySettings } from '@/lib/money'
 import type { DealCard, PaymentRow, PaymentStatus } from '@/lib/types'
 
 const FILTERS: { key: PaymentStatus | 'all'; label: string }[] = [
@@ -36,11 +37,12 @@ const STATUS_LABEL: Record<PaymentStatus, string> = {
 }
 
 export function PaymentsTable({
-  rows: initial, live, deals = [],
+  rows: initial, live, deals = [], money,
 }: {
   rows: PaymentRow[]
   live: boolean
   deals?: DealCard[]
+  money: MoneySettings
 }) {
   // الفلتر الافتراضي: اللي محتاج شغل منك
   const [filter, setFilter] = useState<PaymentStatus | 'all'>('needs_checking')
@@ -125,8 +127,15 @@ export function PaymentsTable({
                 </p>
               </div>
 
-              <span className="num shrink-0 text-[15px] font-bold text-ink">
-                {formatMoney(p.amount, p.currency)}
+              <span className="shrink-0 text-end">
+                <span className="num block text-[15px] font-bold text-ink">
+                  {formatMoney(p.amount, p.currency)}
+                </span>
+                {p.currency !== money.base && (
+                  <span className="num block text-chip text-ink-faint">
+                    {formatMoney(p.amount_base ?? 0, money.base)}
+                  </span>
+                )}
               </span>
 
               <span className={cn('chip shrink-0', STATUS_STYLE[p.status])}>
@@ -154,7 +163,7 @@ export function PaymentsTable({
           icon={<Receipt className="h-7 w-7" />}
           title={emptyStates.payments.title}
           body={emptyStates.payments.body}
-          action={deals.length ? <AddPayment deals={deals} variant="soft" /> : undefined}
+          action={deals.length ? <AddPayment deals={deals} money={money} variant="soft" /> : undefined}
         />
       )}
 

@@ -123,6 +123,10 @@ export interface Payment {
   deal_id: string
   amount: number
   currency: string
+  /** سعر الصرف وقت القبض — مثبَّت، لا يتحرّك بعدها */
+  fx_rate: number | null
+  /** المبلغ بعملة الأساس، محسوباً بذلك السعر */
+  amount_base: number | null
   method: PaymentMethod
   status: PaymentStatus
   receipt_url: string | null
@@ -157,7 +161,11 @@ export interface DealCard extends Deal {
   stage: Stage
   owner: User | null
   hours_in_stage: number
+  /** المسدَّد بعملة الصفقة — ليُطرح من قيمتها مباشرة */
   paid_total: number
+  /** القيمة والمسدَّد بعملة الأساس — كل مجموع يُبنى على هذين لا على الأصل */
+  value_base: number
+  paid_total_base: number
 }
 
 export interface ContactRow extends Contact {

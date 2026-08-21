@@ -53,7 +53,7 @@ export const termHints: Record<string, { title: string; definition: string; exam
   mrr: {
     title: 'الإيراد الشهري المتكرر (MRR)',
     definition: 'مجموع ما يصلك شهرياً من الاشتراكات الفعّالة وحدها.',
-    example: 'أربع عيادات مشتركة في SmartClinic بـ 250 شيكل = 1,000 شيكل شهرياً، تصلك دون بيع أي دورة.',
+    example: 'أربع عيادات مشتركة في SmartClinic بـ ‎$70‎ = ‎$280‎ شهرياً، تصلك دون بيع أي دورة.',
   },
   organization: {
     title: 'الجهة',
@@ -63,7 +63,7 @@ export const termHints: Record<string, { title: string; definition: string; exam
   subscription: {
     title: 'الاشتراك',
     definition: 'دفعة شهرية تتجدّد تلقائياً، بخلاف الدورة التي تُباع مرة واحدة وتنتهي.',
-    example: 'عيادة النور مشتركة في SmartClinic بـ 250 شيكل شهرياً، ويتجدّد اشتراكها في الخامس عشر من كل شهر.',
+    example: 'عيادة النور مشتركة في SmartClinic بـ ‎$70‎ شهرياً، ويتجدّد اشتراكها في الخامس عشر من كل شهر.',
   },
   stuckSince: {
     title: 'متوقفة منذ',
@@ -78,7 +78,7 @@ export const termHints: Record<string, { title: string; definition: string; exam
   payment: {
     title: 'الدفعة',
     definition: 'كل تحويل مالي يُسجَّل في سطر مستقل، ليتيح لك متابعة السداد على أجزاء.',
-    example: 'عميل دفع 100 شيكل عربوناً ثم 150 شيكلاً لاحقاً: سطران، والمتبقّي يُحتسب تلقائياً.',
+    example: 'عميل دفع 100 شيكل عربوناً ثم 150 شيكلاً لاحقاً: سطران بعملتهما، والمتبقّي يُحتسب تلقائياً.',
   },
   needsChecking: {
     title: 'بانتظار التحقق',
@@ -88,7 +88,7 @@ export const termHints: Record<string, { title: string; definition: string; exam
   lifetimeValue: {
     title: 'القيمة الإجمالية',
     definition: 'مجموع ما دفعه هذا الشخص لديك منذ أول تعامل.',
-    example: 'اشترك في دورتين بـ 250 شيكلاً لكل منهما، فتكون قيمته الإجمالية 500 شيكل.',
+    example: 'اشترك في دورتين بـ 250 شيكلاً لكل منهما، فتكون قيمته الإجمالية 500 شيكل — ‎$135‎ في التقارير.',
   },
   task: {
     title: 'المهمة',

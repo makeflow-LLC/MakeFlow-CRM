@@ -462,6 +462,7 @@ export async function createProduct(input: {
   kind: 'course' | 'subscription' | 'service'
   default_price?: number
   color?: string
+  currency?: string
 }): Promise<ActionResult> {
   const db = createClient()
 
@@ -472,6 +473,7 @@ export async function createProduct(input: {
     kind: input.kind,
     default_price: input.default_price ?? null,
     color: input.color || '#5B4CE0',
+    currency: input.currency || 'USD',
     active: true,
   }).select('id').single()
 
@@ -490,7 +492,13 @@ export async function createProduct(input: {
 
 export async function updateProduct(
   id: string,
-  input: { name?: string; default_price?: number | null; color?: string; active?: boolean },
+  input: {
+    name?: string
+    default_price?: number | null
+    color?: string
+    active?: boolean
+    currency?: string
+  },
 ): Promise<ActionResult> {
   const db = createClient()
 
@@ -502,6 +510,7 @@ export async function updateProduct(
   if (input.default_price !== undefined) patch.default_price = input.default_price
   if (input.color !== undefined) patch.color = input.color
   if (input.active !== undefined) patch.active = input.active
+  if (input.currency !== undefined) patch.currency = input.currency
 
   const { error } = await db.from('products').update(patch).eq('id', id)
   if (error) return { ok: false, error: FAILED }
@@ -535,6 +544,37 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: FAILED }
 
   revalidatePath('/products')
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// العملة وسعر الصرف
+// ---------------------------------------------------------------------------
+
+/**
+ * تحديث سعر صرف عملة مقابل عملة الأساس.
+ *
+ * السعر المحفوظ يخصّ ما يأتي بعده فقط: الدفعات المسجَّلة سلفاً تحمل سعرها
+ * الخاص وقت قبضها ولا يمسّها هذا التغيير — وهو الفرق بين تقريرٍ يثبت وتقريرٍ
+ * يتغيّر كل صباح.
+ */
+export async function setCurrencyRate(code: string, unitsPerBase: number): Promise<ActionResult> {
+  const db = createClient()
+
+  if (!code.trim()) return { ok: false, error: 'اختر العملة.' }
+  if (!(unitsPerBase > 0)) return { ok: false, error: 'أدخل سعراً أكبر من صفر.' }
+
+  const { error } = await db
+    .from('currency_rates')
+    .upsert(
+      { code: code.trim().toUpperCase(), units_per_base: unitsPerBase, updated_at: new Date().toISOString() },
+      { onConflict: 'code' },
+    )
+
+  if (error) return { ok: false, error: FAILED }
+
+  // السعر يدخل في كل رقم متوقَّع على كل شاشة
+  revalidatePath('/', 'layout')
   return { ok: true }
 }
 
@@ -737,6 +777,10 @@ export async function deleteOrganization(id: string): Promise<ActionResult> {
 export async function createPayment(input: {
   deal_id: string
   amount: number
+  /** عملة المبلغ المقبوض فعلاً — تسبق عملة الصفقة إن اختلفتا */
+  currency?: string
+  /** سعر صرف يوم القبض؛ غيابه يعني استعمال السعر المحفوظ */
+  fx_rate?: number
   method?: 'bank_transfer' | 'cash' | 'wallet' | 'other'
   status?: 'paid' | 'needs_checking' | 'not_paid'
   paid_at?: string
@@ -757,7 +801,8 @@ export async function createPayment(input: {
   const { data, error } = await db.from('payments').insert({
     deal_id: deal.id,
     amount: input.amount,
-    currency: deal.currency,
+    currency: input.currency || deal.currency,
+    fx_rate: input.fx_rate && input.fx_rate > 0 ? input.fx_rate : null,
     method: input.method ?? 'bank_transfer',
     status,
     // المؤكَّدة يلزمها تاريخ، وإلا ظهرت في التقارير بلا زمن

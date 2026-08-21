@@ -14,18 +14,19 @@ import { AddReminder } from '@/components/shared/add-reminder'
 import { AddPayment } from '@/components/payments/add-payment'
 import { buildDealCards, buildQueue, buildStats, getDataset } from '@/lib/data'
 import { doneStates, pageHints } from '@/lib/hints'
-import { formatMoney } from '@/lib/utils'
+import { formatMoney, toBase } from '@/lib/utils'
 
 export default async function TodayPage() {
   const data = await getDataset()
   const stats = buildStats(data)
   const deals = buildDealCards(data)
   const { dueToday, overdue, stuck, needsChecking } = buildQueue(data)
+  const base = data.money.base
 
   const allClear =
     dueToday.length === 0 && overdue.length === 0 && stuck.length === 0 && needsChecking.length === 0
 
-  const stuckValue = stuck.reduce((sum, d) => sum + d.value, 0)
+  const stuckValue = stuck.reduce((sum, d) => sum + toBase(d.value, d.currency, data.money), 0)
 
   return (
     <>
@@ -36,7 +37,7 @@ export default async function TodayPage() {
         action={
           <>
             <AddReminder contacts={data.contacts} />
-            <AddPayment deals={deals} variant="outline" />
+            <AddPayment deals={deals} money={data.money} variant="outline" />
           </>
         }
       />
@@ -45,7 +46,7 @@ export default async function TodayPage() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
         <StatCard
           label="قيمة الصفقات المفتوحة" value={stats.open_value} term="deal"
-          tone="accent" suffix="ILS"
+          tone="accent" currency={base}
           icon={<HandCoins className="h-4 w-4" />}
           delta={`${stats.open_deals} صفقة`}
           deltaTone="accent"
@@ -53,18 +54,18 @@ export default async function TodayPage() {
         />
         <StatCard
           label="حصّلته هذا الشهر" value={stats.collected_this_month}
-          tone="success" suffix="ILS"
+          tone="success" currency={base}
           icon={<Wallet className="h-4 w-4" />}
           sub="مجموع الدفعات المؤكَّدة منذ أول الشهر"
         />
         <StatCard
           label="بِعته ولم تقبضه" value={stats.uncollected}
-          tone="warn" suffix="ILS"
+          tone="warn" currency={base}
           icon={<Banknote className="h-4 w-4" />}
           sub="صفقات وصلت مرحلة الدفع أو نجحت، ولم يُسجَّل مقابلها كاملاً"
         />
         <StatCard
-          label="الإيراد الشهري المتكرر" value={stats.mrr} term="mrr" suffix="ILS"
+          label="الإيراد الشهري المتكرر" value={stats.mrr} term="mrr" currency={base}
           icon={<RefreshCw className="h-4 w-4" />}
           delta={`${stats.renewals_this_month} تجديداً`}
           deltaTone="neutral"
@@ -139,7 +140,7 @@ export default async function TodayPage() {
                 </CardTitle>
                 {stuckValue > 0 && (
                   <span className="num text-faint font-semibold text-ink">
-                    {formatMoney(stuckValue)}
+                    {formatMoney(stuckValue, base)}
                   </span>
                 )}
               </CardHeader>

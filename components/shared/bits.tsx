@@ -80,13 +80,14 @@ export type StatTone = keyof typeof STAT_TONES
  * على سطر واحد، وبعرض 240px تنكسر — والانكسار أهون من فيضان البطاقة.
  */
 export function StatCard({
-  label, value, term, tone = 'default', suffix, sub, icon, delta, deltaTone = 'success',
+  label, value, term, tone = 'default', currency, sub, icon, delta, deltaTone = 'success',
 }: {
   label: string
   value: number
   term?: TermKey
   tone?: StatTone
-  suffix?: string
+  /** رمز العملة المعروض بجانب الرقم — يعني أن القيمة مبلغ لا عدد */
+  currency?: string
   /** سطر صغير تحت الرقم — العدد خلف المبلغ، أو ما يفسّره */
   sub?: React.ReactNode
   icon?: React.ReactNode
@@ -112,9 +113,8 @@ export function StatCard({
 
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 pb-2 pt-3">
         <span className={cn('num text-stat font-bold', t.text)}>
-          {suffix ? formatNumber(Math.round(value)) : formatNumber(value)}
+          {currency ? formatMoney(Math.round(value), currency) : formatNumber(value)}
         </span>
-        {suffix && <span className="text-body text-ink-faint">₪</span>}
         {delta && <Chip tone={deltaTone} className="num whitespace-nowrap">{delta}</Chip>}
       </div>
 

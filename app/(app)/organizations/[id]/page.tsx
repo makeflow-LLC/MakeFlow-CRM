@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { ActivityIcon, BotBadge, ProductPill, StagePill } from '@/components/shared/bits'
 import { buildOrganization360, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
-import { daysLabel, formatMoney, timeAgo } from '@/lib/utils'
+import { daysLabel, formatMoney, timeAgo, toBase } from '@/lib/utils'
 
 export default async function OrganizationPage({ params }: { params: { id: string } }) {
   const data = await getDataset()
@@ -17,7 +17,10 @@ export default async function OrganizationPage({ params }: { params: { id: strin
   if (!view) notFound()
 
   const { organization, people, deals, subscriptions, activities } = view
-  const mrr = subscriptions.filter((s) => s.status === 'active').reduce((s, x) => s + x.monthly_amount, 0)
+  const base = data.money.base
+  const mrr = subscriptions
+    .filter((s) => s.status === 'active')
+    .reduce((sum, x) => sum + toBase(x.monthly_amount, x.currency, data.money), 0)
 
   return (
     <>
@@ -45,7 +48,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
               )}
               <div className="border-t border-line-soft pt-4">
                 <p className="mb-1 text-faint font-semibold text-ink-muted">الدخل الشهري من هذه الجهة</p>
-                <p className="num text-stat-sm font-bold text-chip-success-fg">{formatMoney(mrr)}</p>
+                <p className="num text-stat-sm font-bold text-chip-success-fg">{formatMoney(mrr, base)}</p>
               </div>
 
               {/* الحذف آخر ما في البطاقة ومفصول بخط — إجراء لا يُضغط سهواً */}

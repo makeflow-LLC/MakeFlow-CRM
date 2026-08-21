@@ -256,7 +256,7 @@ export default async function ContactPage({ params }: { params: { id: string } }
               count={payments.length}
               action={
                 contactDeals.length > 0 ? (
-                  <AddPayment deals={contactDeals} variant="soft" label="سجّل دفعة" />
+                  <AddPayment deals={contactDeals} money={data.money} variant="soft" label="سجّل دفعة" />
                 ) : undefined
               }
             />

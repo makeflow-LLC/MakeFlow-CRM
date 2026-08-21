@@ -48,6 +48,7 @@ export default async function DealsPage({
         products={data.products}
         users={data.users}
         contacts={data.contacts.map((c) => ({ id: c.id, full_name: c.full_name }))}
+        baseCurrency={data.money.base}
         live={isLive()}
       />
     </>

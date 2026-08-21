@@ -10,11 +10,12 @@ export function formatNumber(n: number): string {
   return new Intl.NumberFormat('en-US').format(n)
 }
 
-/** المبلغ + العملة، بصيغة بسيطة يقراها أي حدا: «250 ₪» */
-export function formatMoney(amount: number, currency = 'ILS'): string {
-  const symbol = currency === 'ILS' ? '₪' : currency
-  return `${formatNumber(Math.round(amount))} ${symbol}`
-}
+/**
+ * المبلغ + رمز عملته. التعريف نفسه في lib/money.ts، ويُعاد تصديره من هنا
+ * لأن نصف المكوّنات تستورده من utils منذ البداية — وتغيير كل استيراد
+ * تغييرٌ بلا فائدة.
+ */
+export { formatMoney, formatWithBase, symbolFor, toBase, fromBase } from '@/lib/money'
 
 const AR_MONTHS = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',

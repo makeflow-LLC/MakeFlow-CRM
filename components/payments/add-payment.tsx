@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Toast } from '@/components/ui/toast'
 import { createPayment } from '@/lib/actions'
 import { formatMoney } from '@/lib/utils'
+import { CURRENCIES, symbolFor, type MoneySettings } from '@/lib/money'
 import type { DealCard } from '@/lib/types'
 
 const METHODS = [
@@ -42,11 +43,13 @@ function nowLocal(): string {
  */
 export function AddPayment({
   deals,
+  money,
   presetDealId,
   label = 'سجّل دفعة',
   variant = 'primary',
 }: {
   deals: DealCard[]
+  money: MoneySettings
   presetDealId?: string
   label?: string
   variant?: 'primary' | 'outline' | 'soft'
@@ -60,6 +63,8 @@ export function AddPayment({
   const [status, setStatus] = useState<(typeof STATUSES)[number]['value']>('paid')
   const [paidAt, setPaidAt] = useState(nowLocal())
   const [note, setNote] = useState('')
+  const [currency, setCurrency] = useState(money.base)
+  const [rate, setRate] = useState('')
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
 
@@ -74,9 +79,26 @@ export function AddPayment({
   function pickDeal(id: string) {
     setDealId(id)
     const d = open_deals.find((x) => x.id === id)
+    if (!d) return
     // نقترح المتبقّي، وللمستخدم أن يغيّره إن كانت دفعة جزئية
-    if (d) setAmount(String(Math.max(d.value - d.paid_total, 0) || d.value))
+    setAmount(String(Math.max(d.value - d.paid_total, 0) || d.value))
+    // والعملة تتبع الصفقة، فالغالب أن يُقبض بما سُعِّر به
+    pickCurrency(d.currency)
   }
+
+  function pickCurrency(code: string) {
+    setCurrency(code)
+    setRate(code === money.base ? '' : String(money.rates[code] ?? ''))
+  }
+
+  /** ما سيدخل التقارير — يُعرض قبل الحفظ لا بعده */
+  const rateNumber = Number(rate)
+  const baseAmount =
+    currency === money.base
+      ? Number(amount)
+      : rateNumber > 0
+        ? Number(amount) / rateNumber
+        : 0
 
   return (
     <>
@@ -101,11 +123,16 @@ export function AddPayment({
               if (!dealId) return setError('اختر الصفقة.')
               const value = Number(amount)
               if (!(value > 0)) return setError('أدخل المبلغ بالأرقام.')
+              if (currency !== money.base && !(rateNumber > 0)) {
+                return setError('أدخل سعر الصرف يوم وصول المبلغ.')
+              }
 
               startTransition(async () => {
                 const res = await createPayment({
                   deal_id: dealId,
                   amount: value,
+                  currency,
+                  fx_rate: currency === money.base ? undefined : rateNumber,
                   method,
                   status,
                   paid_at: status === 'paid' ? new Date(paidAt).toISOString() : undefined,
@@ -117,8 +144,8 @@ export function AddPayment({
                   setAmount(''); setNote('')
                   setToast(
                     status === 'paid'
-                      ? `سُجّلت دفعة ${formatMoney(value)} وتقدّمت الصفقة.`
-                      : `سُجّلت دفعة ${formatMoney(value)} بانتظار تحقّقك منها.`,
+                      ? `سُجّلت دفعة ${formatMoney(value, currency)} وتقدّمت الصفقة.`
+                      : `سُجّلت دفعة ${formatMoney(value, currency)} بانتظار تحقّقك منها.`,
                   )
                   router.refresh()
                 } else setError(res.error ?? '')
@@ -154,14 +181,57 @@ export function AddPayment({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="ap-amount">المبلغ</Label>
-              <Input
-                id="ap-amount" value={amount} inputMode="decimal"
-                className="num text-right"
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="150"
-              />
+              <Label htmlFor="ap-amount">المبلغ المقبوض وعملته</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="ap-amount" value={amount} inputMode="decimal"
+                  className="num text-right"
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="150"
+                />
+                <select
+                  aria-label="عملة المبلغ"
+                  value={currency}
+                  onChange={(e) => pickCurrency(e.target.value)}
+                  className={`${selectClass} w-[130px] shrink-0`}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-chip leading-relaxed text-ink-muted">
+                سجّل ما وصلك فعلاً بعملته. لا تحوّله بنفسك — النظام يفعل ذلك ويحفظ الأصل.
+              </p>
             </div>
+
+            {/* عملة غير الأساس: السعر يُطلب هنا ويُثبَّت على الدفعة إلى الأبد */}
+            {currency !== money.base && (
+              <div className="space-y-1 rounded-input bg-page p-4">
+                <Label htmlFor="ap-rate">
+                  سعر الصرف يوم وصول المبلغ — 1 {symbolFor(money.base)} {money.base} =
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="ap-rate" value={rate} inputMode="decimal"
+                    className="num text-right"
+                    onChange={(e) => setRate(e.target.value)}
+                    placeholder="3.70"
+                  />
+                  <span className="shrink-0 text-body font-semibold text-ink-muted">
+                    {symbolFor(currency)} {currency}
+                  </span>
+                </div>
+                {baseAmount > 0 && (
+                  <p className="text-faint font-semibold text-chip-success-fg">
+                    سيُحتسب في التقارير: {formatMoney(baseAmount, money.base)}
+                  </p>
+                )}
+                <p className="text-chip leading-relaxed text-ink-muted">
+                  السعر يُثبَّت على هذه الدفعة، فلا يتغيّر رقمها لاحقاً مهما تحرّك السوق.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-1">
               <Label htmlFor="ap-method">طريقة الدفع</Label>

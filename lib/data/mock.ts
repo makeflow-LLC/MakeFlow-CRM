@@ -27,10 +27,10 @@ export const products: Product[] = [
   { id: 'p1', name: 'دورة الأتمتة بالذكاء الاصطناعي (n8n)', kind: 'course', default_price: 250, currency: 'ILS', color: '#7B61FF', active: true },
   { id: 'p2', name: 'دورة الذكاء الاصطناعي للأعمال', kind: 'course', default_price: 250, currency: 'ILS', color: '#3B9BE8', active: true },
   { id: 'p3', name: 'دورة صناعة المحتوى بالذكاء الاصطناعي', kind: 'course', default_price: 200, currency: 'ILS', color: '#F5A623', active: true },
-  { id: 'p4', name: 'Mojeeb', kind: 'subscription', default_price: 150, currency: 'ILS', color: '#22C55E', active: true },
-  { id: 'p5', name: 'SmartClinic', kind: 'subscription', default_price: 250, currency: 'ILS', color: '#0EA47A', active: true },
-  { id: 'p6', name: 'SmartSalon', kind: 'subscription', default_price: 150, currency: 'ILS', color: '#E8639B', active: true },
-  { id: 'p7', name: 'Imagen', kind: 'service', default_price: 500, currency: 'ILS', color: '#5B4CE0', active: true },
+  { id: 'p4', name: 'Mojeeb', kind: 'subscription', default_price: 40, currency: 'USD', color: '#22C55E', active: true },
+  { id: 'p5', name: 'SmartClinic', kind: 'subscription', default_price: 70, currency: 'USD', color: '#0EA47A', active: true },
+  { id: 'p6', name: 'SmartSalon', kind: 'subscription', default_price: 40, currency: 'USD', color: '#E8639B', active: true },
+  { id: 'p7', name: 'Imagen', kind: 'service', default_price: 135, currency: 'USD', color: '#5B4CE0', active: true },
 ]
 
 export const pipelines: Pipeline[] = [
@@ -87,11 +87,11 @@ export const deals: Deal[] = [
   { id: 'd7', title: 'رنا مشتهى — دورة الأتمتة بالذكاء الاصطناعي (n8n)', contact_id: 'c5', organization_id: 'o2', product_id: 'p1', pipeline_id: 'pl1', stage_id: 's7', stage_entered_at: days(3), value: 250, currency: 'ILS', status: 'lost', lost_reason: 'السعر مرتفع بالنسبة لها في هذه الفترة', expected_close_date: null, owner_id: 'u2', created_at: days(22) },
 
   // --- B2B ---
-  { id: 'd8', title: 'د. سامي حرب — SmartClinic', contact_id: 'c2', organization_id: 'o1', product_id: 'p5', pipeline_id: 'pl2', stage_id: 't5', stage_entered_at: days(12), value: 250, currency: 'ILS', status: 'won', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(40) },
-  { id: 'd9', title: 'د. هبة قنديل — SmartClinic', contact_id: 'c6', organization_id: 'o5', product_id: 'p5', pipeline_id: 'pl2', stage_id: 't4', stage_entered_at: hours(96), value: 250, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: dateIn(10), owner_id: 'u1', created_at: days(11) },
-  { id: 'd10', title: 'محمد أبو ندى — Mojeeb', contact_id: 'c4', organization_id: 'o3', product_id: 'p4', pipeline_id: 'pl2', stage_id: 't3', stage_entered_at: hours(60), value: 150, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: dateIn(7), owner_id: 'u1', created_at: days(15) },
-  { id: 'd11', title: 'رنا مشتهى — SmartSalon', contact_id: 'c5', organization_id: 'o2', product_id: 'p6', pipeline_id: 'pl2', stage_id: 't2', stage_entered_at: hours(18), value: 150, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(8) },
-  { id: 'd12', title: 'سلمى نجم — Imagen', contact_id: 'c8', organization_id: 'o4', product_id: 'p7', pipeline_id: 'pl2', stage_id: 't1', stage_entered_at: hours(5), value: 500, currency: 'ILS', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(1) },
+  { id: 'd8', title: 'د. سامي حرب — SmartClinic', contact_id: 'c2', organization_id: 'o1', product_id: 'p5', pipeline_id: 'pl2', stage_id: 't5', stage_entered_at: days(12), value: 70, currency: 'USD', status: 'won', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(40) },
+  { id: 'd9', title: 'د. هبة قنديل — SmartClinic', contact_id: 'c6', organization_id: 'o5', product_id: 'p5', pipeline_id: 'pl2', stage_id: 't4', stage_entered_at: hours(96), value: 70, currency: 'USD', status: 'open', lost_reason: null, expected_close_date: dateIn(10), owner_id: 'u1', created_at: days(11) },
+  { id: 'd10', title: 'محمد أبو ندى — Mojeeb', contact_id: 'c4', organization_id: 'o3', product_id: 'p4', pipeline_id: 'pl2', stage_id: 't3', stage_entered_at: hours(60), value: 40, currency: 'USD', status: 'open', lost_reason: null, expected_close_date: dateIn(7), owner_id: 'u1', created_at: days(15) },
+  { id: 'd11', title: 'رنا مشتهى — SmartSalon', contact_id: 'c5', organization_id: 'o2', product_id: 'p6', pipeline_id: 'pl2', stage_id: 't2', stage_entered_at: hours(18), value: 40, currency: 'USD', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(8) },
+  { id: 'd12', title: 'سلمى نجم — Imagen', contact_id: 'c8', organization_id: 'o4', product_id: 'p7', pipeline_id: 'pl2', stage_id: 't1', stage_entered_at: hours(5), value: 135, currency: 'USD', status: 'open', lost_reason: null, expected_close_date: null, owner_id: 'u2', created_at: days(1) },
 ]
 
 export const activities: Activity[] = [
@@ -120,18 +120,18 @@ export const tasks: Task[] = [
 ]
 
 export const payments: Payment[] = [
-  { id: 'y1', deal_id: 'd1', amount: 250, currency: 'ILS', method: 'wallet', status: 'needs_checking', receipt_url: null, paid_at: null, verified_by: null, note: 'سُجّلت من البوت', created_at: hours(20) },
-  { id: 'y2', deal_id: 'd5', amount: 250, currency: 'ILS', method: 'bank_transfer', status: 'paid', receipt_url: null, paid_at: hours(50), verified_by: 'u1', note: null, created_at: hours(52) },
-  { id: 'y3', deal_id: 'd6', amount: 200, currency: 'ILS', method: 'cash', status: 'paid', receipt_url: null, paid_at: days(6), verified_by: 'u2', note: null, created_at: days(6) },
-  { id: 'y4', deal_id: 'd8', amount: 250, currency: 'ILS', method: 'bank_transfer', status: 'paid', receipt_url: null, paid_at: days(12), verified_by: 'u2', note: null, created_at: days(12) },
-  { id: 'y5', deal_id: 'd4', amount: 100, currency: 'ILS', method: 'wallet', status: 'needs_checking', receipt_url: null, paid_at: null, verified_by: null, note: 'عربون — سُجّلت من البوت', created_at: hours(6) },
-  { id: 'y6', deal_id: 'd10', amount: 150, currency: 'ILS', method: 'other', status: 'not_paid', receipt_url: null, paid_at: null, verified_by: null, note: null, created_at: hours(60) },
+  { id: 'y1', deal_id: 'd1', amount: 250, currency: 'ILS', fx_rate: 3.7, amount_base: 67.57, method: 'wallet', status: 'needs_checking', receipt_url: null, paid_at: null, verified_by: null, note: 'سُجّلت من البوت', created_at: hours(20) },
+  { id: 'y2', deal_id: 'd5', amount: 250, currency: 'ILS', fx_rate: 3.7, amount_base: 67.57, method: 'bank_transfer', status: 'paid', receipt_url: null, paid_at: hours(50), verified_by: 'u1', note: null, created_at: hours(52) },
+  { id: 'y3', deal_id: 'd6', amount: 200, currency: 'ILS', fx_rate: 3.7, amount_base: 54.05, method: 'cash', status: 'paid', receipt_url: null, paid_at: days(6), verified_by: 'u2', note: null, created_at: days(6) },
+  { id: 'y4', deal_id: 'd8', amount: 70, currency: 'USD', fx_rate: 1, amount_base: 70, method: 'bank_transfer', status: 'paid', receipt_url: null, paid_at: days(12), verified_by: 'u2', note: null, created_at: days(12) },
+  { id: 'y5', deal_id: 'd4', amount: 100, currency: 'ILS', fx_rate: 3.7, amount_base: 27.03, method: 'wallet', status: 'needs_checking', receipt_url: null, paid_at: null, verified_by: null, note: 'عربون — سُجّلت من البوت', created_at: hours(6) },
+  { id: 'y6', deal_id: 'd10', amount: 40, currency: 'USD', fx_rate: 1, amount_base: 40, method: 'other', status: 'not_paid', receipt_url: null, paid_at: null, verified_by: null, note: null, created_at: hours(60) },
 ]
 
 export const subscriptions: Subscription[] = [
-  { id: 'b1', organization_id: 'o1', contact_id: null, product_id: 'p5', deal_id: 'd8', plan_name: 'سمارت كلينيك — باقة العيادة', monthly_amount: 250, currency: 'ILS', start_date: dateIn(-40), renewal_date: dateIn(3), status: 'active', churn_reason: null, owner_id: 'u2' },
-  { id: 'b2', organization_id: 'o3', contact_id: null, product_id: 'p4', deal_id: null, plan_name: 'مجيب — باقة أساسية', monthly_amount: 150, currency: 'ILS', start_date: dateIn(-70), renewal_date: dateIn(12), status: 'active', churn_reason: null, owner_id: 'u1' },
-  { id: 'b3', organization_id: 'o2', contact_id: null, product_id: 'p6', deal_id: null, plan_name: 'سمارت صالون', monthly_amount: 150, currency: 'ILS', start_date: dateIn(-25), renewal_date: dateIn(-2), status: 'active', churn_reason: null, owner_id: 'u2' },
-  { id: 'b4', organization_id: 'o4', contact_id: null, product_id: 'p4', deal_id: null, plan_name: 'مجيب — باقة المراكز', monthly_amount: 150, currency: 'ILS', start_date: dateIn(-95), renewal_date: dateIn(22), status: 'active', churn_reason: null, owner_id: 'u2' },
-  { id: 'b5', organization_id: 'o5', contact_id: null, product_id: 'p5', deal_id: null, plan_name: 'سمارت كلينيك — تجربة', monthly_amount: 250, currency: 'ILS', start_date: dateIn(-10), renewal_date: dateIn(5), status: 'paused', churn_reason: null, owner_id: 'u1' },
+  { id: 'b1', organization_id: 'o1', contact_id: null, product_id: 'p5', deal_id: 'd8', plan_name: 'سمارت كلينيك — باقة العيادة', monthly_amount: 70, currency: 'USD', start_date: dateIn(-40), renewal_date: dateIn(3), status: 'active', churn_reason: null, owner_id: 'u2' },
+  { id: 'b2', organization_id: 'o3', contact_id: null, product_id: 'p4', deal_id: null, plan_name: 'مجيب — باقة أساسية', monthly_amount: 40, currency: 'USD', start_date: dateIn(-70), renewal_date: dateIn(12), status: 'active', churn_reason: null, owner_id: 'u1' },
+  { id: 'b3', organization_id: 'o2', contact_id: null, product_id: 'p6', deal_id: null, plan_name: 'سمارت صالون', monthly_amount: 40, currency: 'USD', start_date: dateIn(-25), renewal_date: dateIn(-2), status: 'active', churn_reason: null, owner_id: 'u2' },
+  { id: 'b4', organization_id: 'o4', contact_id: null, product_id: 'p4', deal_id: null, plan_name: 'مجيب — باقة المراكز', monthly_amount: 40, currency: 'USD', start_date: dateIn(-95), renewal_date: dateIn(22), status: 'active', churn_reason: null, owner_id: 'u2' },
+  { id: 'b5', organization_id: 'o5', contact_id: null, product_id: 'p5', deal_id: null, plan_name: 'سمارت كلينيك — تجربة', monthly_amount: 70, currency: 'USD', start_date: dateIn(-10), renewal_date: dateIn(5), status: 'paused', churn_reason: null, owner_id: 'u1' },
 ]

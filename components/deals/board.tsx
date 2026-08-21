@@ -30,10 +30,14 @@ interface Props {
   products: Product[]
   users: User[]
   contacts: { id: string; full_name: string }[]
+  /** عملة التقارير — المجاميع كلها بها، لا بعملة كل صفقة */
+  baseCurrency: string
   live: boolean
 }
 
-export function DealsBoard({ deals: initial, stages, products, users, contacts, live }: Props) {
+export function DealsBoard({
+  deals: initial, stages, products, users, contacts, baseCurrency, live,
+}: Props) {
   const router = useRouter()
 
   /**
@@ -199,7 +203,7 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
           <span className="num font-semibold text-ink">{formatNumber(visible.length)}</span> صفقة
           {' · '}
           <span className="num font-semibold text-ink">
-            {formatMoney(visible.reduce((sum, d) => sum + d.value, 0))}
+            {formatMoney(visible.reduce((sum, d) => sum + d.value_base, 0), baseCurrency)}
           </span>
         </span>
       </div>
@@ -214,7 +218,12 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
         {/* الكمبيوتر: بورد أفقي. الموبايل: أعمدة فوق بعض */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:overflow-x-auto md:pb-4 scroll-slim">
           {stages.map((stage) => (
-            <Column key={stage.id} stage={stage} deals={visible.filter((d) => d.stage_id === stage.id)} />
+            <Column
+              key={stage.id}
+              stage={stage}
+              baseCurrency={baseCurrency}
+              deals={visible.filter((d) => d.stage_id === stage.id)}
+            />
           ))}
           {/* حشوة نهاية البورد: تمنع قصّ آخر عمود عند أقصى التمرير */}
           <div className="hidden w-2 shrink-0 md:block" aria-hidden />
@@ -283,9 +292,11 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
   )
 }
 
-function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
+function Column({
+  stage, deals, baseCurrency,
+}: { stage: Stage; deals: DealCard[]; baseCurrency: string }) {
   const { setNodeRef, isOver, active } = useDroppable({ id: stage.id })
-  const total = deals.reduce((sum, d) => sum + d.value, 0)
+  const total = deals.reduce((sum, d) => sum + d.value_base, 0)
 
   // العمود المصدر لا يُبرز كهدف: إعادة الإفلات في مكانها ليست نقلة
   const dragged = active ? String(active.id) : null
@@ -310,7 +321,7 @@ function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
           {formatNumber(deals.length)}
         </span>
         <span className="num ms-auto shrink-0 text-chip font-semibold text-white/90">
-          {formatMoney(total)}
+          {formatMoney(total, baseCurrency)}
         </span>
       </div>
 

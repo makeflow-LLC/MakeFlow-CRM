@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { EmptyState } from '@/components/hints/empty-state'
 import { Toast } from '@/components/ui/toast'
 import { createProduct, deleteProduct, updateProduct } from '@/lib/actions'
+import { CURRENCIES } from '@/lib/money'
 import { cn, formatMoney } from '@/lib/utils'
 import type { Product, ProductKind } from '@/lib/types'
 
@@ -218,6 +219,7 @@ function ProductForm({
   const [name, setName] = useState(product?.name ?? '')
   const [kind, setKind] = useState<ProductKind>(product?.kind ?? 'course')
   const [price, setPrice] = useState(product?.default_price ? String(product.default_price) : '')
+  const [currency, setCurrency] = useState(product?.currency ?? 'USD')
   const [color, setColor] = useState(product?.color ?? PALETTE[0])
   const [error, setError] = useState('')
 
@@ -246,6 +248,7 @@ function ProductForm({
                 name,
                 default_price: price ? Number(price) : undefined,
                 color,
+                currency,
               }
               const res = product
                 ? await updateProduct(product.id, {
@@ -291,13 +294,28 @@ function ProductForm({
           )}
 
           <div className="space-y-1">
-            <Label htmlFor="pr-price">السعر الافتراضي (شيكل)</Label>
-            <Input
-              id="pr-price" value={price} className="num text-right"
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="250"
-            />
-            <p className="text-xs text-ink-muted">يُقترح تلقائياً عند فتح صفقة، ويمكن تغييره لكل صفقة.</p>
+            <Label htmlFor="pr-price">السعر الافتراضي وعملته</Label>
+            <div className="flex gap-2">
+              <Input
+                id="pr-price" value={price} className="num text-right"
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="250"
+              />
+              <select
+                aria-label="عملة المنتج"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className={`${selectClass} w-[130px] shrink-0`}
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs leading-relaxed text-ink-muted">
+              العملة هنا تنتقل إلى كل صفقة واشتراك على هذا المنتج، فلا تُختار في كل مرة.
+              الدورات بالشيكل والاشتراكات بالدولار مثلاً.
+            </p>
           </div>
 
           <div className="space-y-2">

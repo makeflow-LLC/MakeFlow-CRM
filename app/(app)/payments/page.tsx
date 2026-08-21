@@ -15,9 +15,9 @@ export default async function PaymentsPage() {
         title="المدفوعات"
         hint={pageHints.payments}
         term="needsChecking"
-        action={<AddPayment deals={deals} />}
+        action={<AddPayment deals={deals} money={data.money} />}
       />
-      <PaymentsTable rows={rows} live={isLive()} deals={deals} />
+      <PaymentsTable rows={rows} live={isLive()} deals={deals} money={data.money} />
     </>
   )
 }
