@@ -539,6 +539,188 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// الاشتراك — إنهاء أو حذف
+// ---------------------------------------------------------------------------
+
+/**
+ * إنهاء اشتراك.
+ *
+ * هذا هو الإجراء الصحيح في الحالة الغالبة: العميل توقّف، والاشتراك انتهى.
+ * الصف يبقى، فيبقى معه تاريخ الدخل الذي جاء منه، ويخرج من حساب الإيراد
+ * الشهري المتكرر لأنه لم يعد فعّالاً. الحذف يمحو الاثنين.
+ */
+export async function endSubscription(id: string, reason?: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const { error } = await db
+    .from('subscriptions')
+    .update({ status: 'churned', churn_reason: reason?.trim() || null })
+    .eq('id', id)
+
+  if (error) return { ok: false, error: FAILED }
+
+  revalidatePath('/subscriptions')
+  revalidatePath('/organizations')
+  revalidatePath('/reports')
+  revalidatePath('/')
+  return { ok: true }
+}
+
+/** إعادة تفعيل اشتراك أُنهي بالخطأ */
+export async function resumeSubscription(id: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const { error } = await db
+    .from('subscriptions')
+    .update({ status: 'active', churn_reason: null })
+    .eq('id', id)
+
+  if (error) return { ok: false, error: FAILED }
+
+  revalidatePath('/subscriptions')
+  revalidatePath('/organizations')
+  revalidatePath('/reports')
+  revalidatePath('/')
+  return { ok: true }
+}
+
+/**
+ * حذف اشتراك.
+ *
+ * لا شيء في قاعدة البيانات يعتمد على الاشتراك، فالحذف نظيف تقنياً — وهذا
+ * بالضبط ما يجعله خطراً: يختفي دون أثر، ومعه ما كان يمثّله من دخل في كل
+ * تقرير سابق. لذا نصرّح بمبلغه الشهري ومدّته قبل السؤال.
+ */
+export async function subscriptionDeletionImpact(id: string): Promise<{
+  name: string
+  productName: string
+  monthlyAmount: number
+  currency: string
+  status: string
+  months: number
+} | null> {
+  const db = createClient()
+
+  const { data: sub } = await db
+    .from('subscriptions')
+    .select('id, organization_id, contact_id, product_id, monthly_amount, currency, status, start_date')
+    .eq('id', id)
+    .maybeSingle()
+  if (!sub) return null
+
+  const [{ data: org }, { data: contact }, { data: product }] = await Promise.all([
+    sub.organization_id
+      ? db.from('organizations').select('name').eq('id', sub.organization_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    sub.contact_id
+      ? db.from('contacts').select('full_name').eq('id', sub.contact_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    db.from('products').select('name').eq('id', sub.product_id).maybeSingle(),
+  ])
+
+  const start = sub.start_date ? new Date(sub.start_date) : null
+  const months = start
+    ? Math.max(
+        Math.round((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)),
+        0,
+      )
+    : 0
+
+  return {
+    name: org?.name ?? contact?.full_name ?? '—',
+    productName: product?.name ?? '—',
+    monthlyAmount: Number(sub.monthly_amount),
+    currency: sub.currency,
+    status: sub.status,
+    months,
+  }
+}
+
+export async function deleteSubscription(id: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const { error } = await db.from('subscriptions').delete().eq('id', id)
+  if (error) return { ok: false, error: FAILED }
+
+  revalidatePath('/subscriptions')
+  revalidatePath('/organizations')
+  revalidatePath('/reports')
+  revalidatePath('/')
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// حذف جهة
+// ---------------------------------------------------------------------------
+
+/**
+ * حذف جهة.
+ *
+ * الجهة ليست جذراً كالشخص: حذفها لا يمحو أحداً ولا صفقة، بل يفكّ الارتباط
+ * فقط — يبقى الأشخاص وتبقى صفقاتهم بلا جهة. لذلك هو أخفّ من حذف شخص.
+ *
+ * إلا في حالة واحدة: اشتراك باسم الجهة وحدها لا شخص له. فكّه يتركه بلا
+ * صاحب، وقاعدة البيانات ترفض ذلك، فيفشل الحذف كله برسالة غامضة. نكتشفها
+ * قبل الضغط ونقول ما العمل.
+ */
+export async function organizationDeletionImpact(id: string): Promise<{
+  name: string
+  contacts: number
+  deals: number
+  subscriptions: number
+  /** اشتراكات لا شخص لها — تمنع الحذف */
+  orphanSubscriptions: number
+  mrr: number
+} | null> {
+  const db = createClient()
+
+  const { data: org } = await db
+    .from('organizations').select('id, name').eq('id', id).maybeSingle()
+  if (!org) return null
+
+  const [{ count: contacts }, { count: deals }, { data: subs }] = await Promise.all([
+    db.from('contacts').select('id', { count: 'exact', head: true }).eq('organization_id', id),
+    db.from('deals').select('id', { count: 'exact', head: true }).eq('organization_id', id),
+    db.from('subscriptions').select('id, contact_id, status, monthly_amount').eq('organization_id', id),
+  ])
+
+  return {
+    name: org.name,
+    contacts: contacts ?? 0,
+    deals: deals ?? 0,
+    subscriptions: subs?.length ?? 0,
+    orphanSubscriptions: (subs ?? []).filter((s) => !s.contact_id).length,
+    mrr: (subs ?? [])
+      .filter((s) => s.status === 'active')
+      .reduce((sum, s) => sum + Number(s.monthly_amount), 0),
+  }
+}
+
+export async function deleteOrganization(id: string): Promise<ActionResult> {
+  const db = createClient()
+
+  const { data: orphans } = await db
+    .from('subscriptions').select('id').eq('organization_id', id).is('contact_id', null)
+
+  if ((orphans?.length ?? 0) > 0) {
+    return {
+      ok: false,
+      error: 'لهذه الجهة اشتراك باسمها لا شخص له. أنهِ الاشتراك أو احذفه أولاً، ثم احذف الجهة.',
+    }
+  }
+
+  const { error } = await db.from('organizations').delete().eq('id', id)
+  if (error) return { ok: false, error: readableError(error.message, 'organization') }
+
+  revalidatePath('/organizations')
+  revalidatePath('/contacts')
+  revalidatePath('/deals')
+  revalidatePath('/subscriptions')
+  revalidatePath('/')
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // دفعة
 // ---------------------------------------------------------------------------
 

@@ -4,6 +4,7 @@ import { Building2, Users } from 'lucide-react'
 import { PageHeader, SectionHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card, CardBody } from '@/components/ui/card'
+import { DeleteOrganization } from '@/components/organizations/delete-organization'
 import { Avatar } from '@/components/ui/avatar'
 import { ActivityIcon, BotBadge, ProductPill, StagePill } from '@/components/shared/bits'
 import { buildOrganization360, getDataset } from '@/lib/data'
@@ -42,9 +43,14 @@ export default async function OrganizationPage({ params }: { params: { id: strin
                   {organization.notes}
                 </p>
               )}
-              <div className="border-t border-line pt-4">
-                <p className="mb-1 text-xs font-semibold text-ink-muted">الدخل الشهري من هذه الجهة</p>
-                <p className="num text-2xl font-bold text-success">{formatMoney(mrr)}</p>
+              <div className="border-t border-line-soft pt-4">
+                <p className="mb-1 text-faint font-semibold text-ink-muted">الدخل الشهري من هذه الجهة</p>
+                <p className="num text-stat-sm font-bold text-chip-success-fg">{formatMoney(mrr)}</p>
+              </div>
+
+              {/* الحذف آخر ما في البطاقة ومفصول بخط — إجراء لا يُضغط سهواً */}
+              <div className="border-t border-line-soft pt-3">
+                <DeleteOrganization id={organization.id} name={organization.name} />
               </div>
             </CardBody>
           </Card>
@@ -52,9 +58,9 @@ export default async function OrganizationPage({ params }: { params: { id: strin
           <div>
             <SectionHeader title="الأشخاص" count={people.length} />
             {people.length ? (
-              <Card className="divide-y divide-line overflow-hidden">
+              <Card className="divide-y divide-line-soft overflow-hidden">
                 {people.map((p) => (
-                  <Link key={p.id} href={`/contacts/${p.id}`} className="row flex items-center gap-3 px-4 py-3 hover:bg-page">
+                  <Link key={p.id} href={`/contacts/${p.id}`} className="row flex items-center gap-3 px-4 py-3">
                     <Avatar name={p.full_name} color="#9AA4B2" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-ink">{p.full_name}</p>
@@ -73,7 +79,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
           <section>
             <SectionHeader title="الاشتراكات" term="subscription" count={subscriptions.length} />
             {subscriptions.length ? (
-              <Card className="divide-y divide-line overflow-hidden">
+              <Card className="divide-y divide-line-soft overflow-hidden">
                 {subscriptions.map((s) => (
                   <div key={s.id} className="row flex flex-wrap items-center gap-4 px-6 py-3">
                     <div className="min-w-0 flex-1">
@@ -95,7 +101,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
           <section>
             <SectionHeader title="الصفقات" term="deal" count={deals.length} />
             {deals.length ? (
-              <Card className="divide-y divide-line overflow-hidden">
+              <Card className="divide-y divide-line-soft overflow-hidden">
                 {deals.map((d) => (
                   <Link key={d.id} href={`/contacts/${d.contact_id}`} className="row flex flex-wrap items-center gap-4 px-6 py-3 hover:bg-page">
                     <div className="min-w-0 flex-1">
@@ -117,7 +123,7 @@ export default async function OrganizationPage({ params }: { params: { id: strin
           <section>
             <SectionHeader title="آخر الأنشطة" term="activity" />
             {activities.length ? (
-              <Card className="divide-y divide-line overflow-hidden">
+              <Card className="divide-y divide-line-soft overflow-hidden">
                 {activities.map((a) => (
                   <div key={a.id} className="flex items-start gap-3 px-6 py-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-page text-ink-muted">

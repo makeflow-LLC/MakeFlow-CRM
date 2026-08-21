@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/hints/empty-state'
 import { Card } from '@/components/ui/card'
 import { Chip } from '@/components/ui/pill'
 import { AddSubscription } from '@/components/shared/add-dialogs'
+import { SubscriptionActions } from '@/components/subscriptions/subscription-actions'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { buildSubscriptionRows, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
@@ -24,7 +25,7 @@ export default async function SubscriptionsPage() {
     (s) => s.days_until_renewal !== null && s.days_until_renewal >= 0 && s.days_until_renewal <= 7,
   ).length
 
-  const GRID = 'grid-cols-[minmax(230px,1.5fr)_170px_110px_150px_110px] gap-4'
+  const GRID = 'grid-cols-[minmax(220px,1.5fr)_160px_110px_140px_100px_130px] gap-3'
 
   // توزيع الدخل حسب المنتج — شريط واحد بألوان المنتجات
   const byProduct = Object.values(
@@ -111,6 +112,7 @@ export default async function SubscriptionsPage() {
                   <span>شهرياً</span>
                   <span>التجديد</span>
                   <span>الحالة</span>
+                  <span className="text-end">إجراءات</span>
                 </div>
 
                 <div className="divide-y divide-line-soft">
@@ -143,6 +145,11 @@ export default async function SubscriptionsPage() {
                         >
                           {STATUS_LABELS[s.status]}
                         </span>
+                        <SubscriptionActions
+                          id={s.id}
+                          name={s.organization?.name ?? s.contact?.full_name ?? 'الاشتراك'}
+                          active={s.status === 'active'}
+                        />
                       </div>
                     )
                   })}
