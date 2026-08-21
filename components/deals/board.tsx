@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { EmptyState } from '@/components/hints/empty-state'
 import { Toast } from '@/components/ui/toast'
 import { OwnerAvatar, ProductPill, StuckBadge } from '@/components/shared/bits'
+import { Chip } from '@/components/ui/pill'
 import { AddDeal } from '@/components/shared/add-dialogs'
 import { DeleteDeal } from './delete-deal'
 import { PaymentPrompt } from './payment-prompt'
@@ -162,7 +163,7 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
         <select
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
-          className="h-10 rounded-input border border-line bg-card px-3 text-sm font-semibold text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
+          className="h-[38px] rounded-input border border-line bg-card px-3 text-body font-semibold text-ink transition-colors duration-150 hover:bg-[#F4F5F8] focus:border-accent focus:outline-none"
         >
           <option value="">جميع المنتجات</option>
           {products.map((p) => (
@@ -173,7 +174,7 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
         <select
           value={ownerFilter}
           onChange={(e) => setOwnerFilter(e.target.value)}
-          className="h-10 rounded-input border border-line bg-card px-3 text-sm font-semibold text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
+          className="h-[38px] rounded-input border border-line bg-card px-3 text-body font-semibold text-ink transition-colors duration-150 hover:bg-[#F4F5F8] focus:border-accent focus:outline-none"
         >
           <option value="">جميع المسؤولين</option>
           {users.map((u) => (
@@ -194,8 +195,12 @@ export function DealsBoard({ deals: initial, stages, products, users, contacts, 
           </Button>
         )}
 
-        <span className="me-auto text-sm text-ink-muted">
-          <span className="num">{formatNumber(visible.length)}</span> صفقة
+        <span className="me-auto text-body text-ink-muted">
+          <span className="num font-semibold text-ink">{formatNumber(visible.length)}</span> صفقة
+          {' · '}
+          <span className="num font-semibold text-ink">
+            {formatMoney(visible.reduce((sum, d) => sum + d.value, 0))}
+          </span>
         </span>
       </div>
 
@@ -291,34 +296,31 @@ function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
     <div
       ref={setNodeRef}
       className={cn(
-        'w-full shrink-0 rounded-card p-1 transition-colors duration-200 md:w-[280px]',
+        'w-full shrink-0 rounded-card bg-[#EFF1F5] p-2.5 transition-colors duration-200 md:w-[270px]',
         targeted && 'bg-accent-soft',
       )}
     >
       {/* ترويسة العمود: اسم المرحلة بلونها + العدد والمجموع */}
       <div
-        className={cn(
-          'mb-3 rounded-card px-3 py-2 transition-transform duration-200',
-          targeted && 'scale-[1.02]',
-        )}
+        className="mb-2.5 flex items-center gap-2 rounded-chip px-3 py-2"
         style={{ backgroundColor: stage.color }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-bold text-white">{stage.name}</span>
-          <span className="num rounded-pill bg-white/25 px-2 py-0.5 text-xs font-bold text-white">
-            {formatNumber(deals.length)}
-          </span>
-        </div>
-        <p className="num mt-0.5 text-xs font-semibold text-white/85">{formatMoney(total)}</p>
+        <span className="truncate text-body font-semibold text-white">{stage.name}</span>
+        <span className="num shrink-0 rounded-pill bg-white/[.28] px-2 py-0.5 text-chip font-semibold text-white">
+          {formatNumber(deals.length)}
+        </span>
+        <span className="num ms-auto shrink-0 text-chip font-semibold text-white/90">
+          {formatMoney(total)}
+        </span>
       </div>
 
-      <div className="space-y-3 md:min-h-[120px]">
+      <div className="space-y-2.5 md:min-h-[120px]">
         {deals.map((d) => <Card key={d.id} deal={d} />)}
 
         {/* مكان الاستقرار: يظهر أثناء التصويب على العمود */}
         {targeted && (
           <div
-            className="rounded-card border-2 border-dashed border-accent/50 bg-card/60 py-7 text-center text-xs font-semibold text-accent"
+            className="rounded-[10px] border border-dashed border-accent bg-card/70 py-7 text-center text-chip font-semibold text-accent"
             aria-hidden
           >
             أفلتها هنا
@@ -326,7 +328,7 @@ function Column({ stage, deals }: { stage: Stage; deals: DealCard[] }) {
         )}
 
         {!deals.length && !targeted && (
-          <p className="rounded-card border border-dashed border-line py-6 text-center text-xs text-ink-muted">
+          <p className="rounded-[10px] border border-dashed border-[#D9DEE7] py-6 text-center text-chip text-ink-faint">
             اسحب صفقة إلى هنا
           </p>
         )}
@@ -345,10 +347,10 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
       {...(overlay ? {} : attributes)}
       style={overlay ? undefined : { touchAction: 'manipulation' }}
       className={cn(
-        'surface cursor-grab space-y-2 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop active:cursor-grabbing',
+        'cursor-grab space-y-2 rounded-[10px] border border-line bg-card p-3.5 transition-colors duration-150 hover:border-accent active:cursor-grabbing',
         // البطاقة الأصلية تُخفى أثناء السحب: النسخة الطائرة تكفي، وبقاؤها باهتة يربك العين
         isDragging && 'invisible',
-        overlay && 'rotate-2 scale-[1.03] shadow-pop',
+        overlay && 'border-accent shadow-pop',
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -356,7 +358,7 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
           href={`/contacts/${deal.contact_id}`}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
-          className="truncate text-sm font-bold text-ink hover:text-accent"
+          className="truncate text-body-lg font-semibold text-ink hover:text-accent"
         >
           {deal.contact.full_name}
         </Link>
@@ -368,21 +370,21 @@ function Card({ deal, overlay = false }: { deal: DealCard; overlay?: boolean }) 
 
       <ProductPill product={deal.product} />
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="num text-sm font-bold text-ink">{formatMoney(deal.value, deal.currency)}</span>
-        {deal.paid_total > 0 && deal.paid_total < deal.value && (
-          <span className="text-[11px] font-semibold text-success">
-            المسدَّد <span className="num">{formatMoney(deal.paid_total)}</span>
-          </span>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-2">
+        <span className="num text-[15px] font-bold text-ink">
+          {formatMoney(deal.value, deal.currency)}
+        </span>
+        {deal.status === 'open' && deal.hours_in_stage > STUCK_HOURS ? (
+          <StuckBadge hours={deal.hours_in_stage} />
+        ) : deal.paid_total > 0 && deal.paid_total < deal.value ? (
+          <Chip tone="success" className="num">
+            سُدّد {formatMoney(deal.paid_total)}
+          </Chip>
+        ) : null}
       </div>
 
-      {deal.status === 'open' && deal.hours_in_stage > STUCK_HOURS && (
-        <StuckBadge hours={deal.hours_in_stage} />
-      )}
-
       {deal.status === 'lost' && deal.lost_reason && (
-        <p className="truncate rounded-input bg-danger/8 px-2 py-1 text-[11px] text-danger" title={deal.lost_reason}>
+        <p className="truncate rounded-chip bg-chip-danger-bg px-2 py-1 text-chip font-medium text-chip-danger-fg" title={deal.lost_reason}>
           {deal.lost_reason}
         </p>
       )}

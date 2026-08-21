@@ -76,6 +76,8 @@ interface Viewer {
   role: Role
   active: boolean
   auth_user_id: string
+  full_name: string
+  avatar_color: string
 }
 
 async function currentViewer(): Promise<Viewer | null> {
@@ -87,7 +89,7 @@ async function currentViewer(): Promise<Viewer | null> {
 
   const { data } = await db
     .from('users')
-    .select('id, role, active, auth_user_id')
+    .select('id, role, active, auth_user_id, full_name, avatar_color')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -112,18 +114,24 @@ export async function viewerStatus(): Promise<{
   signedIn: boolean
   linked: boolean
   active: boolean
+  /** اسم من يعمل الآن ولونه — لأفاتار الشريط العلوي */
+  name: string | null
+  color: string
 }> {
-  if (!(await isLiveMode())) return { signedIn: false, linked: true, active: true }
+  const blank = { signedIn: false, linked: true, active: true, name: null, color: '#5B4CE0' }
+  if (!(await isLiveMode())) return blank
 
   const db = createClient()
   const { data: { user } } = await db.auth.getUser()
-  if (!user) return { signedIn: false, linked: true, active: true }
+  if (!user) return blank
 
   const viewer = await currentViewer()
   return {
     signedIn: true,
     linked: Boolean(viewer),
     active: Boolean(viewer?.active),
+    name: viewer?.full_name ?? null,
+    color: viewer?.avatar_color ?? '#5B4CE0',
   }
 }
 

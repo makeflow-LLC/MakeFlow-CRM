@@ -44,13 +44,13 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-page p-4">
       <Card className="w-full max-w-sm">
-        <CardBody className="space-y-6">
+        <CardBody className="space-y-6 p-7">
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-input bg-accent text-lg font-bold text-white">
               M
             </div>
             <h1 className="text-xl font-bold text-ink">Makeflow CRM</h1>
-            <p className="mt-1 text-sm text-ink-muted">سجّل الدخول للوصول إلى بيانات عملائك</p>
+            <p className="mt-1 text-body text-ink-muted">سجّل الدخول للوصول إلى بيانات عملائك</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
@@ -81,13 +81,13 @@ export default function LoginPage() {
 
             <FieldError>{error}</FieldError>
 
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" size="lg" className="w-full" disabled={busy}>
               {busy ? 'جارٍ الدخول…' : 'تسجيل الدخول'}
             </Button>
           </form>
 
           {!live && (
-            <p className="rounded-input bg-accent-soft p-3 text-center text-xs leading-relaxed text-accent">
+            <p className="rounded-input bg-accent-soft p-3 text-center text-faint leading-relaxed text-chip-accent-fg">
               أنت في وضع المعاينة: اضغط «تسجيل الدخول» دون بيانات للدخول إلى التطبيق.
             </p>
           )}

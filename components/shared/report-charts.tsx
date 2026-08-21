@@ -1,14 +1,9 @@
-'use client'
-
-import {
-  Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from 'recharts'
 import { formatMoney, formatNumber } from '@/lib/utils'
 
 /**
- * الأسماء العربية الطويلة (زي «وافق على التسجيل») ما بتنقرأ لما تتمايل على محور
- * الرسمة، فبنستعمل أشرطة HTML للتصنيفات — الاسم كامل على اليمين والشريط بيمتد
- * لليسار. الرسمة الحقيقية محفوظة للشهور، لأن أسماءها قصيرة وبتزبط.
+ * الأسماء العربية الطويلة (مثل «وافق على التسجيل») لا تُقرأ حين تتمايل على
+ * محور رسمة، فنستعمل أشرطة HTML للتصنيفات — الاسم كاملاً على اليمين والشريط
+ * يمتدّ يساراً. لا مكتبة رسم هنا أصلاً: النتيجة أدقّ اتجاهياً وأخفّ حملاً.
  */
 export function HtmlBars({
   rows,
@@ -21,22 +16,27 @@ export function HtmlBars({
   const show = (v: number) => (format === 'money' ? formatMoney(v) : formatNumber(v))
 
   if (!rows.length) {
-    return <p className="py-12 text-center text-sm text-ink-muted">لا توجد أرقام بعد.</p>
+    return <p className="py-12 text-center text-body text-ink-muted">لا توجد أرقام بعد.</p>
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {rows.map((r) => (
         <div key={r.name}>
-          <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-            <span className="min-w-0 flex-1 truncate font-semibold text-ink" title={r.name}>
+          <div className="mb-1.5 flex items-center gap-2 text-body">
+            <span
+              className="h-[9px] w-[9px] shrink-0 rounded-[3px]"
+              style={{ backgroundColor: r.color }}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1 truncate font-medium text-ink" title={r.name}>
               {r.name}
             </span>
-            <span className="num shrink-0 font-bold text-ink">{show(r.value)}</span>
+            <span className="num shrink-0 font-semibold text-ink">{show(r.value)}</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-pill bg-page">
+          <div className="h-2 w-full overflow-hidden rounded-pill bg-page">
             <div
-              className="h-full rounded-pill transition-all duration-150"
+              className="h-full rounded-pill"
               style={{ width: `${Math.max((r.value / max) * 100, 2)}%`, backgroundColor: r.color }}
             />
           </div>
@@ -46,30 +46,35 @@ export function HtmlBars({
   )
 }
 
-const AXIS = { fontSize: 12, fontFamily: 'inherit', fill: '#6B7280' }
-
-/** الإيراد شهرياً — أسماء الشهور قصيرة، فالرسمة هنا تعمل مضبوط */
+/**
+ * الإيراد المقبوض شهرياً.
+ *
+ * أعمدة HTML لا رسمة مكتبة: المحاور العربية المقلوبة كانت تكلّف أكثر ممّا
+ * تعطي، والقيمة فوق كل عمود تُغني عن محور رأسي كامل. الشهر الحالي بلون
+ * أساسي والبقية بدرجته الفاتحة، فيُقرأ موضعك في السنة بلمحة.
+ */
 export function MonthlyRevenueChart({ data }: { data: { month: string; revenue: number }[] }) {
+  const max = Math.max(...data.map((d) => d.revenue), 1)
+  const last = data.length - 1
+
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 8, left: 0, right: 0, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E6E9F0" vertical={false} />
-        <XAxis dataKey="month" reversed tick={AXIS} axisLine={false} tickLine={false} />
-        <YAxis tick={AXIS} axisLine={false} tickLine={false} orientation="right" />
-        <Tooltip
-          contentStyle={{
-            borderRadius: 12,
-            border: '1px solid #E6E9F0',
-            boxShadow: '0 8px 24px rgba(16,24,40,.12)',
-            fontSize: 13,
-            fontFamily: 'inherit',
-            direction: 'rtl',
-          }}
-          formatter={(v: number) => [formatMoney(v), 'إيراد']}
-          cursor={{ fill: '#F6F7FB' }}
-        />
-        <Bar dataKey="revenue" fill="#5B4CE0" radius={[8, 8, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="flex items-end gap-2" style={{ height: 200 }}>
+      {data.map((d, i) => (
+        <div key={d.month} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1.5">
+          <span className="num text-center text-chip font-semibold text-ink-muted">
+            {d.revenue > 0 ? formatNumber(d.revenue) : ''}
+          </span>
+          <div
+            title={`${d.month}: ${formatMoney(d.revenue)}`}
+            className="w-full rounded-t-lg"
+            style={{
+              height: `${Math.max((d.revenue / max) * 100, d.revenue > 0 ? 3 : 1)}%`,
+              backgroundColor: i === last ? '#5B4CE0' : '#DCD9F7',
+            }}
+          />
+          <span className="truncate text-center text-chip text-ink-muted">{d.month}</span>
+        </div>
+      ))}
+    </div>
   )
 }

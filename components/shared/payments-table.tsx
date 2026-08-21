@@ -22,10 +22,10 @@ const FILTERS: { key: PaymentStatus | 'all'; label: string }[] = [
 ]
 
 const STATUS_STYLE: Record<PaymentStatus, string> = {
-  paid: 'bg-success/12 text-success',
-  needs_checking: 'bg-warn/15 text-[#B26A00]',
-  not_paid: 'bg-page text-ink-muted',
-  refunded: 'bg-danger/10 text-danger',
+  paid: 'bg-chip-success-bg text-chip-success-fg',
+  needs_checking: 'bg-chip-warn-bg text-chip-warn-fg',
+  not_paid: 'bg-chip-neutral-bg text-chip-neutral-fg',
+  refunded: 'bg-chip-danger-bg text-chip-danger-fg',
 }
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
@@ -76,22 +76,24 @@ export function PaymentsTable({
 
   return (
     <>
-      <div className="mb-4 inline-flex flex-wrap items-center gap-1 rounded-input border border-line bg-card p-1">
+      <div className="mb-4 inline-flex flex-wrap items-center gap-1 rounded-[10px] bg-[#EDEFF3] p-1">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
             className={cn(
-              'flex items-center gap-2 rounded-[6px] px-4 py-2 text-sm font-semibold transition-all duration-150',
-              filter === f.key ? 'bg-accent text-white' : 'text-ink-muted hover:text-ink',
+              'flex items-center gap-2 rounded-chip px-3.5 py-1.5 text-body font-semibold transition-colors duration-150',
+              filter === f.key ? 'bg-card text-ink' : 'text-ink-muted hover:text-ink',
             )}
           >
             {f.label}
             <span
               className={cn(
-                'num rounded-pill px-2 py-0.5 text-[11px] font-bold',
-                filter === f.key ? 'bg-white/25 text-white' : 'bg-page text-ink-muted',
+                'num rounded-pill px-1.5 py-0.5 text-chip font-semibold',
+                filter === f.key
+                  ? 'bg-chip-accent-bg text-chip-accent-fg'
+                  : 'bg-card text-ink-muted',
               )}
             >
               {counts(f.key)}
@@ -101,31 +103,33 @@ export function PaymentsTable({
       </div>
 
       {visible.length ? (
-        <Card className="divide-y divide-line overflow-hidden">
+        <Card className="divide-y divide-line-soft overflow-hidden">
           {visible.map((p) => (
-            <div key={p.id} className="row flex flex-wrap items-center gap-4 px-6 py-3">
+            <div key={p.id} className="row flex flex-wrap items-center gap-3 px-4.5 py-3">
               {/* صورة الإيصال — بتكبر بالضغط */}
               <button
                 type="button"
                 onClick={() => setPreview(p)}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-input border border-line bg-page text-ink-muted transition-colors duration-150 hover:border-accent hover:text-accent"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-chip border border-line bg-page text-ink-muted transition-colors duration-150 hover:border-accent hover:text-accent"
                 aria-label="افتح الإيصال"
               >
                 <Receipt className="h-5 w-5" />
               </button>
 
               <div className="min-w-0 flex-1">
-                <Link href={`/contacts/${p.contact.id}`} className="truncate text-sm font-bold text-ink hover:text-accent">
+                <Link href={`/contacts/${p.contact.id}`} className="truncate text-body-lg font-semibold text-ink hover:text-accent">
                   {p.contact.full_name}
                 </Link>
-                <p className="truncate text-xs text-ink-muted">
+                <p className="truncate text-faint text-ink-muted">
                   {p.product.name} · {formatDate(p.paid_at ?? p.created_at)}
                 </p>
               </div>
 
-              <span className="num text-base font-bold text-ink">{formatMoney(p.amount, p.currency)}</span>
+              <span className="num shrink-0 text-[15px] font-bold text-ink">
+                {formatMoney(p.amount, p.currency)}
+              </span>
 
-              <span className={cn('rounded-pill px-3 py-1 text-xs font-bold', STATUS_STYLE[p.status])}>
+              <span className={cn('chip shrink-0', STATUS_STYLE[p.status])}>
                 {STATUS_LABEL[p.status]}
               </span>
 

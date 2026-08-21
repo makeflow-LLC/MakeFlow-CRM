@@ -22,20 +22,37 @@ import type { Contact, Product } from '@/lib/types'
  * أهم شيء فيها: حقل الهاتف بيدوّر على الرقم وقت الكتابة، وإذا كان مسجّل بيقترح
  * تفتح ملف الشخص بدل ما يعمل نسخة ثانية منه.
  */
-export function QuickAdd({ contacts, products }: { contacts: Contact[]; products: Product[] }) {
+export function QuickAdd({
+  contacts, products, variant = 'fab',
+}: {
+  contacts: Contact[]
+  products: Product[]
+  /** fab = زر عائم على الهاتف · bar = زر «إضافة» في الشريط العلوي */
+  variant?: 'fab' | 'bar'
+}) {
   const [open, setOpen] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          type="button"
-          aria-label={microcopy.buttons.quickAdd}
-          title={microcopy.buttons.quickAdd}
-          className="fixed bottom-20 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-pill bg-accent text-white shadow-pop transition-all duration-150 hover:bg-accent-hover hover:scale-105 md:bottom-6 md:left-6"
-        >
-          <Plus className="h-6 w-6" strokeWidth={2.5} />
-        </button>
+        {variant === 'bar' ? (
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-input bg-accent px-3.5 py-2 text-body font-semibold text-white transition-colors duration-150 hover:bg-accent-hover"
+          >
+            <Plus className="h-[15px] w-[15px]" strokeWidth={2.25} />
+            إضافة
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={microcopy.buttons.quickAdd}
+            title={microcopy.buttons.quickAdd}
+            className="fixed bottom-20 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-pill bg-accent text-white shadow-pop transition-colors duration-150 hover:bg-accent-hover md:hidden"
+          >
+            <Plus className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+        )}
       </DialogTrigger>
 
       <DialogContent>

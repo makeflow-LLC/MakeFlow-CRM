@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  body { margin:0; font-family:"IBM Plex Sans Arabic",system-ui,sans-serif; background:#F6F7F9; color:#101828; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  .num { direction:ltr; unicode-bidi:isolate; display:inline-block; font-feature-settings:"lnum" 1; }
+  a { color:#5B4CE0; text-decoration:none; }
+  a:hover { color:#4B3ECB; }
+  button { font-family:inherit; }
+  input { font-family:inherit; }
+  :focus-visible { outline:2px solid #5B4CE0; outline-offset:2px; }
+  .mf-scroll { scrollbar-width:thin; scrollbar-color:#CFD4DF transparent; }
+  .mf-scroll::-webkit-scrollbar { height:10px; width:10px; }
+  .mf-scroll::-webkit-scrollbar-thumb { background:#CFD4DF; border-radius:999px; }
+  .mf-scroll::-webkit-scrollbar-track { background:transparent; }
+</style>
+</helmet>
+
+<div dir="rtl" style="display:flex; min-height:100vh; background:#F6F7F9; font-size:14px; line-height:1.6;">
+
+  <aside style="width:246px; flex:0 0 246px; position:sticky; top:0; align-self:flex-start; height:100vh; display:flex; flex-direction:column; background:#12142B; color:#fff; padding:18px 14px;">
+    <div style="display:flex; align-items:center; gap:11px; padding:4px 8px 22px;">
+      <span style="width:36px; height:36px; flex:0 0 36px; display:flex; align-items:center; justify-content:center; background:#5B4CE0; color:#fff; font-size:17px; font-weight:700; border-radius:9px;">M</span>
+      <span style="display:flex; flex-direction:column; line-height:1.25;">
+        <span style="font-size:15px; font-weight:600;">Makeflow</span>
+        <span style="font-size:12px; color:#8B90AE;">إدارة العملاء</span>
+      </span>
+      <i class="ph ph-caret-down" style="margin-inline-start:auto; font-size:14px; color:#8B90AE;"></i>
+    </div>
+
+    <nav style="display:flex; flex-direction:column; gap:3px;">
+      <sc-for list="{{ nav }}" as="item" hint-placeholder-count="9">
+        <button type="button" onClick="{{ item.go }}" style="display:flex; align-items:center; gap:11px; width:100%; padding:10px 12px; border:0; border-radius:9px; background:{{ item.bg }}; color:{{ item.color }}; font-size:14.5px; font-weight:{{ item.weight }}; cursor:pointer; text-align:start; transition:background .12s;" style-hover="background:#20233F;">
+          <i class="{{ item.icon }}" style="font-size:19px; opacity:{{ item.iconOpacity }};"></i>
+          <span>{{ item.label }}</span>
+          <span style="margin-inline-start:auto; min-width:20px; text-align:center; font-size:11.5px; font-weight:600; color:{{ item.badgeColor }}; background:{{ item.badgeBg }}; border-radius:999px; padding:1px 6px;">{{ item.badge }}</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="margin-top:auto; background:#1B1E3A; border-radius:11px; padding:14px;">
+      <div style="font-size:13px; font-weight:600; padding-bottom:4px;">خطة الفريق</div>
+      <div style="font-size:12px; color:#8B90AE; padding-bottom:10px;">4 أعضاء من 3 مقاعد</div>
+      <div style="height:6px; background:#2B2F52; border-radius:999px; overflow:hidden;"><div style="width:100%; height:100%; background:#F5A623;"></div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+
+    <header style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:16px; background:#fff; border-bottom:1px solid #E7E9EF; padding:12px 30px;">
+      <div style="display:flex; align-items:center; gap:9px; flex:1; max-width:420px; background:#F4F5F8; border:1px solid #E7E9EF; border-radius:9px; padding:8px 12px;">
+        <i class="ph ph-magnifying-glass" style="font-size:17px; color:#667085;"></i>
+        <input placeholder="ابحث عن عميل، صفقة أو رقم هاتف" style="border:0; background:transparent; outline:none; font-size:14px; width:100%; color:#101828;">
+        <span class="num" style="font-size:11px; color:#98A2B3; border:1px solid #DDE0E9; border-radius:5px; padding:0 5px;">⌘K</span>
+      </div>
+      <div style="margin-inline-start:auto; display:flex; align-items:center; gap:10px;">
+        <button type="button" style="display:flex; align-items:center; gap:7px; background:#5B4CE0; color:#fff; border:0; border-radius:9px; padding:9px 15px; font-size:14px; font-weight:600; cursor:pointer;" style-hover="background:#4B3ECB;"><i class="ph ph-plus" style="font-size:15px;"></i>إضافة</button>
+        <button type="button" style="width:38px; height:38px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid #E7E9EF; border-radius:9px; cursor:pointer; position:relative;" style-hover="background:#F4F5F8;">
+          <i class="ph ph-bell" style="font-size:18px; color:#475467;"></i>
+          <span style="position:absolute; top:7px; inset-inline-end:8px; width:7px; height:7px; background:#F04438; border-radius:50%;"></span>
+        </button>
+        <span style="width:38px; height:38px; display:flex; align-items:center; justify-content:center; background:#5B4CE0; color:#fff; font-size:13px; font-weight:600; border-radius:50%;">أح</span>
+      </div>
+    </header>
+
+    <main style="flex:1; padding:26px 30px 60px;">
+
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; padding-bottom:22px;">
+        <div style="max-width:620px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#667085; padding-bottom:7px;">
+            <span>{{ crumb }}</span><i class="ph ph-caret-left" style="font-size:11px;"></i><span style="color:#5B4CE0; font-weight:500;">{{ title }}</span>
+          </div>
+          <h1 style="font-size:27px; font-weight:700; margin:0 0 5px; letter-spacing:0;">{{ title }}</h1>
+          <p style="margin:0; font-size:14.5px; color:#667085;">{{ subtitle }}</p>
+        </div>
+        <div style="display:flex; gap:9px; flex-wrap:wrap;">
+          <sc-for list="{{ actions }}" as="a" hint-placeholder-count="2">
+            <button type="button" style="display:flex; align-items:center; gap:7px; background:{{ a.bg }}; color:{{ a.fg }}; border:1px solid {{ a.border }}; border-radius:9px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;" style-hover="filter:brightness(0.97);"><i class="ph {{ a.icon }}" style="font-size:15px;"></i>{{ a.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+        <section>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px;">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+              <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:18px 18px 16px;">
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <span style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:{{ k.iconBg }}; color:{{ k.tone }};"><i class="ph-fill {{ k.icon }}" style="font-size:16px;"></i></span>
+                  <span style="font-size:13px; color:#667085; font-weight:500;">{{ k.label }}</span>
+                </div>
+                <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 8px; padding:12px 0 8px; min-width:0;">
+                  <span class="num" style="font-size:30px; font-weight:700; line-height:1;">{{ k.value }}</span>
+                  <span style="font-size:14px; color:#98A2B3;">₪</span>
+                  <span class="num" style="font-size:12px; font-weight:600; color:{{ k.deltaColor }}; background:{{ k.deltaBg }}; border-radius:999px; padding:2px 8px; white-space:nowrap;">{{ k.delta }}</span>
+                </div>
+                <div style="font-size:12.5px; color:#98A2B3; line-height:1.5;">{{ k.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px; padding-top:20px; align-items:start;">
+              <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px;">
+                <div style="display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid #EEF0F4;">
+                  <span style="font-size:15.5px; font-weight:600;">مهامك اليوم</span>
+                  <span class="num" style="font-size:12px; font-weight:600; color:#5B4CE0; background:#EFEDFC; border-radius:999px; padding:1px 8px;">4</span>
+                  <span style="margin-inline-start:auto; font-size:13px; color:#667085;">مرتّبة بالوقت</span>
+                </div>
+                <sc-for list="{{ dueToday }}" as="t" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+                    <button type="button" style="width:22px; height:22px; flex:0 0 22px; border:1.5px solid #CFD4DF; border-radius:6px; background:#fff; cursor:pointer;" style-hover="border-color:#5B4CE0; background:#EFEDFC;"></button>
+                    <div style="min-width:0; flex:1;">
+                      <div style="font-size:14.5px; font-weight:600;">{{ t.title }}</div>
+                      <div style="font-size:12.5px; color:#667085;">{{ t.who }}</div>
+                    </div>
+                    <span style="font-size:11.5px; font-weight:600; color:{{ t.tagFg }}; background:{{ t.tagBg }}; border-radius:6px; padding:3px 9px; white-space:nowrap;">{{ t.product }}</span>
+                    <span class="num" style="font-size:13px; color:#667085; width:74px; text-align:end;">{{ t.when }}</span>
+                    <span class="num" style="font-size:14px; font-weight:600; width:66px; text-align:end;">{{ t.value }}</span>
+                  </div>
+                </sc-for>
+                <div style="display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid #EEF0F4; border-top:1px solid #EEF0F4; background:#FEF6F6;">
+                  <span style="font-size:15.5px; font-weight:600; color:#B42318;">متأخرة</span>
+                  <span class="num" style="font-size:12px; font-weight:600; color:#fff; background:#F04438; border-radius:999px; padding:1px 8px;">2</span>
+                </div>
+                <sc-for list="{{ overdue }}" as="t" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FEFAFA;">
+                    <button type="button" style="width:22px; height:22px; flex:0 0 22px; border:1.5px solid #F5A0A0; border-radius:6px; background:#fff; cursor:pointer;" style-hover="border-color:#F04438; background:#FEF3F2;"></button>
+                    <div style="min-width:0; flex:1;">
+                      <div style="font-size:14.5px; font-weight:600;">{{ t.title }}</div>
+                      <div style="font-size:12.5px; color:#667085;">{{ t.who }}</div>
+                    </div>
+                    <span style="font-size:11.5px; font-weight:600; color:#B42318; background:#FEE4E2; border-radius:6px; padding:3px 9px; white-space:nowrap;">{{ t.when }}</span>
+                    <span class="num" style="font-size:14px; font-weight:600; width:66px; text-align:end;">{{ t.value }}</span>
+                  </div>
+                </sc-for>
+                <div style="padding:12px 18px;"><button type="button" style="background:transparent; border:0; color:#5B4CE0; font-size:13.5px; font-weight:600; cursor:pointer;">عرض كل المهام</button></div>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:18px;">
+                <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px;">
+                  <div style="display:flex; align-items:center; gap:8px; padding:15px 18px; border-bottom:1px solid #EEF0F4;">
+                    <i class="ph-fill ph-hourglass-medium" style="font-size:16px; color:#F5A623;"></i>
+                    <span style="font-size:15.5px; font-weight:600;">صفقات متوقفة</span>
+                    <span class="num" style="margin-inline-start:auto; font-size:12.5px; color:#667085;">3 · 1,450 ₪</span>
+                  </div>
+                  <sc-for list="{{ stuck }}" as="d" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+                      <div style="min-width:0; flex:1;">
+                        <div style="font-size:14px; font-weight:600;">{{ d.name }}</div>
+                        <div style="display:flex; align-items:center; gap:6px; padding-top:4px;">
+                          <span style="font-size:11px; font-weight:600; color:#fff; background:{{ d.stageColor }}; border-radius:6px; padding:2px 8px;">{{ d.stage }}</span>
+                          <span class="num" style="font-size:11.5px; color:#B54708;">{{ d.age }}</span>
+                        </div>
+                      </div>
+                      <span class="num" style="font-size:14px; font-weight:600;">{{ d.value }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px;">
+                  <div style="display:flex; align-items:center; gap:8px; padding:15px 18px; border-bottom:1px solid #EEF0F4;">
+                    <i class="ph-fill ph-receipt" style="font-size:16px; color:#12B76A;"></i>
+                    <span style="font-size:15.5px; font-weight:600;">إيصالات تنتظر التحقق</span>
+                  </div>
+                  <sc-for list="{{ receipts }}" as="r" hint-placeholder-count="2">
+                    <div style="display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid #F2F4F7;">
+                      <div style="min-width:0; flex:1;">
+                        <div style="font-size:14px; font-weight:600;">{{ r.name }}</div>
+                        <div style="font-size:12px; color:#667085;">{{ r.product }} · {{ r.method }}</div>
+                      </div>
+                      <span class="num" style="font-size:14px; font-weight:600;">{{ r.value }}</span>
+                      <button type="button" style="background:#ECFDF3; color:#027A48; border:0; border-radius:8px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer;" style-hover="background:#D1FADF;">أكّد</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:20px; background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:52px 30px; text-align:center;">
+              <span style="width:56px; height:56px; display:inline-flex; align-items:center; justify-content:center; background:#ECFDF3; color:#12B76A; border-radius:14px;"><i class="ph-fill ph-check-circle" style="font-size:28px;"></i></span>
+              <h2 style="font-size:20px; font-weight:700; margin:16px 0 6px;">قائمة اليوم نظيفة</h2>
+              <p style="margin:0 auto 20px; max-width:440px; font-size:14.5px; color:#667085;">لا مهام مستحقّة ولا إيصال ينتظر التحقق. الوقت الفاضي أفضل ما يُصرف على ثلاث صفقات متوقفة بقيمة <span class="num" style="font-weight:600; color:#101828;">1,450 ₪</span>.</p>
+              <div style="display:flex; gap:10px; justify-content:center;">
+                <button type="button" style="background:#5B4CE0; color:#fff; border:0; border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;" style-hover="background:#4B3ECB;">افتح الصفقات المتوقفة</button>
+                <button type="button" style="background:#fff; color:#344054; border:1px solid #E7E9EF; border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;" style-hover="background:#F4F5F8;">أضف تذكيراً</button>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isDeals }}" hint-placeholder-val="{{ false }}">
+        <section>
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:18px;">
+            <div style="display:flex; gap:4px; background:#EDEFF3; border-radius:10px; padding:4px;">
+              <sc-for list="{{ pipelines }}" as="p" hint-placeholder-count="2">
+                <button type="button" onClick="{{ p.go }}" style="border:0; border-radius:7px; background:{{ p.bg }}; color:{{ p.color }}; font-size:14px; font-weight:600; padding:7px 15px; cursor:pointer;">{{ p.name }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:8px; margin-inline-start:auto; flex-wrap:wrap;">
+              <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+                <button type="button" style="display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #E7E9EF; border-radius:9px; padding:8px 13px; font-size:13.5px; color:#344054; cursor:pointer;" style-hover="background:#F4F5F8;">{{ f.label }}<i class="ph ph-caret-down" style="font-size:12px; color:#98A2B3;"></i></button>
+              </sc-for>
+              <span class="num" style="align-self:center; font-size:13px; color:#667085;">{{ dealCount }} صفقة · {{ dealValue }}</span>
+            </div>
+          </div>
+
+          <div class="mf-scroll" style="display:flex; gap:14px; overflow-x:auto; padding-bottom:14px; align-items:flex-start;">
+            <sc-for list="{{ columns }}" as="c" hint-placeholder-count="6">
+              <div style="width:270px; flex:0 0 270px; background:#EFF1F5; border-radius:12px; padding:10px;">
+                <div style="display:flex; align-items:center; gap:8px; background:{{ c.color }}; color:#fff; border-radius:9px; padding:9px 12px;">
+                  <span style="font-size:14px; font-weight:600;">{{ c.name }}</span>
+                  <span class="num" style="font-size:11.5px; font-weight:600; background:rgba(255,255,255,.28); border-radius:999px; padding:1px 7px;">{{ c.count }}</span>
+                  <span class="num" style="margin-inline-start:auto; font-size:12.5px; font-weight:600;">{{ c.value }}</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:9px; padding-top:10px;">
+                  <sc-for list="{{ c.cards }}" as="d" hint-placeholder-count="2">
+                    <div style="background:#fff; border:1px solid #E7E9EF; border-radius:10px; padding:13px; cursor:grab;" style-hover="border-color:#5B4CE0;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <div style="min-width:0; flex:1;">
+                          <div style="font-size:14.5px; font-weight:600;">{{ d.name }}</div>
+                          <div style="font-size:12px; color:#667085;">{{ d.org }}</div>
+                        </div>
+                        <span style="width:26px; height:26px; flex:0 0 26px; display:flex; align-items:center; justify-content:center; background:{{ d.ownerColor }}; color:#fff; font-size:11px; font-weight:600; border-radius:50%;">{{ d.owner }}</span>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:6px; padding-top:10px;">
+                        <span style="font-size:11px; font-weight:600; color:{{ d.tagFg }}; background:{{ d.tagBg }}; border-radius:6px; padding:2px 8px;">{{ d.product }}</span>
+                      </div>
+                      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:11px; margin-top:11px; border-top:1px solid #F2F4F7;">
+                        <span class="num" style="font-size:15px; font-weight:700;">{{ d.value }}</span>
+                        <span class="num" style="font-size:11.5px; font-weight:500; color:{{ d.ageColor }}; background:{{ d.ageBg }}; border-radius:6px; padding:2px 7px;">{{ d.age }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <button type="button" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; background:transparent; border:1px dashed #CFD4DF; border-radius:10px; padding:10px; font-size:13px; color:#667085; cursor:pointer;" style-hover="border-color:#5B4CE0; color:#5B4CE0; background:#fff;"><i class="ph ph-plus" style="font-size:13px;"></i>أضف صفقة</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isContacts }}" hint-placeholder-val="{{ false }}">
+        <section>
+          <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid #EEF0F4;">
+                <div style="display:flex; align-items:center; gap:8px; background:#F4F5F8; border:1px solid #E7E9EF; border-radius:9px; padding:7px 11px; width:280px;">
+                  <i class="ph ph-magnifying-glass" style="font-size:16px; color:#667085;"></i>
+                  <input placeholder="ابحث بالاسم أو الهاتف" style="border:0; background:transparent; outline:none; font-size:13.5px; width:100%;">
+                </div>
+                <span class="num" style="margin-inline-start:auto; font-size:13px; color:#667085;">{{ contactCount }} جهة اتصال</span>
+              </div>
+              <div class="mf-scroll" style="overflow-x:auto;">
+                <div style="min-width:820px;">
+                  <div style="display:grid; grid-template-columns:minmax(230px,1.5fr) 150px 180px 80px 110px 90px; gap:16px; align-items:center; padding:11px 18px; background:#FAFBFC; border-bottom:1px solid #EEF0F4; font-size:12.5px; font-weight:600; color:#667085;">
+                    <span>الاسم</span><span>الهاتف</span><span>الجهة</span><span>الصفقات</span><span>آخر نشاط</span><span>المسؤول</span>
+                  </div>
+                  <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="7">
+                    <div style="display:grid; grid-template-columns:minmax(230px,1.5fr) 150px 180px 80px 110px 90px; gap:16px; align-items:center; padding:13px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+                      <div style="min-width:0; display:flex; align-items:center; gap:10px;">
+                        <span style="width:32px; height:32px; flex:0 0 32px; display:flex; align-items:center; justify-content:center; background:{{ c.color }}; color:#fff; font-size:12px; font-weight:600; border-radius:50%;">{{ c.initials }}</span>
+                        <div style="min-width:0;">
+                          <div style="font-size:14px; font-weight:600;">{{ c.name }}</div>
+                          <div style="font-size:11.5px; color:#98A2B3;">{{ c.source }}</div>
+                        </div>
+                      </div>
+                      <span class="num" style="font-size:13.5px; color:#475467;">{{ c.phone }}</span>
+                      <span style="font-size:13.5px; color:#475467;">{{ c.org }}</span>
+                      <span class="num" style="font-size:12.5px; font-weight:600; color:#5B4CE0; background:#EFEDFC; border-radius:999px; padding:2px 9px; justify-self:start;">{{ c.deals }}</span>
+                      <span style="font-size:13px; color:#667085;">{{ c.last }}</span>
+                      <span style="font-size:13px; color:#475467;">{{ c.owner }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:52px 30px; text-align:center;">
+              <span style="width:56px; height:56px; display:inline-flex; align-items:center; justify-content:center; background:#EFEDFC; color:#5B4CE0; border-radius:14px;"><i class="ph-fill ph-users-three" style="font-size:28px;"></i></span>
+              <h2 style="font-size:20px; font-weight:700; margin:16px 0 6px;">لا جهات اتصال بعد</h2>
+              <p style="margin:0 auto 20px; max-width:460px; font-size:14.5px; color:#667085;">الشخص يُسجَّل مرة واحدة، حتى لو اشترى منك عشر مرات. ابدأ بملف Excel قديم، أو أضف أول اسم بيدك — والباقي يأتي من البوت تلقائياً.</p>
+              <div style="display:flex; gap:10px; justify-content:center;">
+                <button type="button" style="background:#5B4CE0; color:#fff; border:0; border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;">استورد من Excel</button>
+                <button type="button" style="background:#fff; color:#344054; border:1px solid #E7E9EF; border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;">أضف جهة اتصال</button>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isOrgs }}" hint-placeholder-val="{{ false }}">
+        <section style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px;">
+          <sc-for list="{{ orgs }}" as="o" hint-placeholder-count="6">
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:18px;" style-hover="border-color:#5B4CE0;">
+              <div style="display:flex; align-items:center; gap:11px;">
+                <span style="width:40px; height:40px; flex:0 0 40px; display:flex; align-items:center; justify-content:center; background:{{ o.iconBg }}; color:{{ o.iconFg }}; border-radius:10px;"><i class="ph-fill ph-buildings" style="font-size:20px;"></i></span>
+                <div style="min-width:0;">
+                  <div style="font-size:15px; font-weight:600;">{{ o.name }}</div>
+                  <div style="font-size:12.5px; color:#667085;">{{ o.type }} · {{ o.city }}</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px; padding-top:16px; margin-top:14px; border-top:1px solid #F2F4F7; font-size:12.5px; color:#667085;">
+                <span><span class="num" style="font-weight:600; color:#101828;">{{ o.people }}</span> أشخاص</span>
+                <span><span class="num" style="font-weight:600; color:#101828;">{{ o.deals }}</span> صفقة</span>
+                <span class="num" style="margin-inline-start:auto; font-weight:600; color:{{ o.mrrColor }}; background:{{ o.mrrBg }}; border-radius:999px; padding:2px 9px;">{{ o.mrr }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isSubs }}" hint-placeholder-val="{{ false }}">
+        <section>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;">
+            <div style="background:#12142B; color:#fff; border-radius:12px; padding:22px;">
+              <div style="font-size:13.5px; color:#8B90AE;">الإيراد الشهري المتكرر</div>
+              <div style="display:flex; align-items:baseline; gap:8px; padding:10px 0 6px;">
+                <span class="num" style="font-size:40px; font-weight:700; line-height:1;">{{ mrr }}</span>
+                <span style="font-size:17px; color:#8B90AE;">₪</span>
+                <span class="num" style="margin-inline-start:auto; font-size:12.5px; font-weight:600; color:#12B76A; background:rgba(18,183,106,.16); border-radius:999px; padding:3px 9px;">+18%</span>
+              </div>
+              <div style="font-size:13px; color:#8B90AE;">من <span class="num" style="color:#fff; font-weight:600;">{{ subCount }}</span> اشتراكاً فعّالاً · تجديدان هذا الأسبوع</div>
+            </div>
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:20px;">
+              <div style="font-size:13.5px; font-weight:600; padding-bottom:14px;">توزيع الدخل حسب الباقة</div>
+              <div style="display:flex; height:12px; border-radius:999px; overflow:hidden;">
+                <sc-for list="{{ subMix }}" as="p" hint-placeholder-count="3">
+                  <div style="width:{{ p.pct }}; background:{{ p.color }};"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:16px; padding-top:14px;">
+                <sc-for list="{{ subMix }}" as="p" hint-placeholder-count="3">
+                  <span style="display:flex; align-items:center; gap:7px; font-size:12.5px;">
+                    <span style="width:10px; height:10px; border-radius:3px; background:{{ p.color }};"></span>
+                    <span style="font-weight:600;">{{ p.name }}</span>
+                    <span class="num" style="color:#667085;">{{ p.amount }}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; margin-top:18px; overflow:hidden;">
+            <div class="mf-scroll" style="overflow-x:auto;">
+              <div style="min-width:760px;">
+                <div style="display:grid; grid-template-columns:minmax(230px,1.5fr) 170px 110px 150px 110px; gap:16px; align-items:center; padding:11px 18px; background:#FAFBFC; border-bottom:1px solid #EEF0F4; font-size:12.5px; font-weight:600; color:#667085;">
+                  <span>الجهة / الشخص</span><span>الباقة</span><span>شهرياً</span><span>التجديد</span><span>الحالة</span>
+                </div>
+                <sc-for list="{{ subs }}" as="s" hint-placeholder-count="7">
+                  <div style="display:grid; grid-template-columns:minmax(230px,1.5fr) 170px 110px 150px 110px; gap:16px; align-items:center; padding:13px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+                    <span style="min-width:0; font-size:14px; font-weight:600;">{{ s.name }}</span>
+                    <span style="font-size:13.5px; color:#475467;">{{ s.plan }}</span>
+                    <span class="num" style="font-size:14px; font-weight:600;">{{ s.amount }}</span>
+                    <span class="num" style="font-size:12.5px; font-weight:600; color:{{ s.renewFg }}; background:{{ s.renewBg }}; border-radius:999px; padding:3px 10px; justify-self:start;">{{ s.renew }}</span>
+                    <span style="font-size:12.5px; font-weight:600; color:{{ s.statusFg }};">{{ s.status }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+        <section>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px;">
+            <sc-for list="{{ money }}" as="m" hint-placeholder-count="4">
+              <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:18px;">
+                <div style="font-size:13px; color:#667085; font-weight:500;">{{ m.label }}</div>
+                <div style="display:flex; align-items:baseline; gap:6px; padding:10px 0 6px;">
+                  <span class="num" style="font-size:28px; font-weight:700; line-height:1; color:{{ m.tone }};">{{ m.value }}</span>
+                  <span style="font-size:14px; color:#98A2B3;">₪</span>
+                </div>
+                <div style="font-size:12.5px; color:#98A2B3;">{{ m.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; padding-top:18px; align-items:start;">
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <span style="font-size:15.5px; font-weight:600;">الإيراد المقبوض شهرياً</span>
+                <span style="font-size:12.5px; color:#667085;">آخر ستة أشهر</span>
+              </div>
+              <div style="display:flex; align-items:flex-end; gap:14px; height:200px; padding-top:22px;">
+                <sc-for list="{{ monthly }}" as="m" hint-placeholder-count="6">
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end;">
+                    <span class="num" style="font-size:12px; font-weight:600; color:#475467;">{{ m.value }}</span>
+                    <div style="width:100%; height:{{ m.h }}; background:{{ m.color }}; border-radius:8px 8px 0 0;"></div>
+                    <span style="font-size:12px; color:#667085;">{{ m.month }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <sc-for list="{{ conversion }}" as="c" hint-placeholder-count="2">
+                <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:18px;">
+                  <div style="font-size:13px; color:#667085;">نسبة التحويل — {{ c.pipeline }}</div>
+                  <div style="display:flex; align-items:baseline; gap:6px; padding:8px 0 12px;">
+                    <span class="num" style="font-size:30px; font-weight:700; line-height:1; color:#5B4CE0;">{{ c.rate }}</span>
+                    <span style="font-size:15px; color:#98A2B3;">%</span>
+                    <span style="margin-inline-start:auto; font-size:12.5px; color:#667085;">ناجحة <span class="num" style="font-weight:600; color:#12B76A;">{{ c.won }}</span> · خاسرة <span class="num" style="font-weight:600; color:#F04438;">{{ c.lost }}</span></span>
+                  </div>
+                  <div style="height:8px; background:#EDEFF3; border-radius:999px; overflow:hidden;"><div style="height:100%; width:{{ c.pct }}; background:#5B4CE0; border-radius:999px;"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; padding-top:18px; align-items:start;">
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:20px;">
+              <div style="font-size:15.5px; font-weight:600; padding-bottom:18px;">الصفقات حسب المرحلة</div>
+              <sc-for list="{{ stageBars }}" as="s" hint-placeholder-count="6">
+                <div style="padding-bottom:14px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; padding-bottom:6px;">
+                    <span style="display:flex; align-items:center; gap:7px;"><span style="width:9px; height:9px; border-radius:3px; background:{{ s.color }};"></span>{{ s.name }}</span>
+                    <span class="num" style="color:#667085;">{{ s.label }}</span>
+                  </div>
+                  <div style="height:8px; background:#EDEFF3; border-radius:999px; overflow:hidden;"><div style="height:100%; width:{{ s.pct }}; background:{{ s.color }}; border-radius:999px;"></div></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:20px;">
+              <div style="font-size:15.5px; font-weight:600; padding-bottom:10px;">أكثر أسباب الخسارة</div>
+              <sc-for list="{{ lost }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-bottom:1px solid #F2F4F7;">
+                  <span style="font-size:14px;">{{ l.reason }}</span>
+                  <span class="num" style="font-size:12.5px; font-weight:600; color:#B42318; background:#FEE4E2; border-radius:999px; padding:2px 9px;">{{ l.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid #EEF0F4;">
+            <span style="font-size:15.5px; font-weight:600;">المنتجات الفعّالة</span>
+            <span class="num" style="font-size:12px; font-weight:600; color:#5B4CE0; background:#EFEDFC; border-radius:999px; padding:1px 8px;">{{ productCount }}</span>
+          </div>
+          <sc-for list="{{ products }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+              <span style="width:38px; height:38px; flex:0 0 38px; display:flex; align-items:center; justify-content:center; background:{{ p.color }}; color:#fff; border-radius:10px;"><i class="ph-fill {{ p.icon }}" style="font-size:18px;"></i></span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:14.5px; font-weight:600;">{{ p.name }}</div>
+                <div style="font-size:12.5px; color:#667085;">{{ p.kind }} · {{ p.note }}</div>
+              </div>
+              <span class="num" style="width:110px; font-size:13px; color:#667085;">{{ p.sold }}</span>
+              <span class="num" style="width:96px; font-size:16px; font-weight:700;">{{ p.price }} ₪</span>
+              <div style="display:flex; gap:6px;">
+                <button type="button" style="width:34px; height:34px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid #E7E9EF; border-radius:8px; cursor:pointer;" style-hover="background:#F4F5F8;"><i class="ph ph-pencil-simple" style="font-size:15px; color:#475467;"></i></button>
+                <button type="button" style="width:34px; height:34px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid #E7E9EF; border-radius:8px; cursor:pointer;" style-hover="background:#F4F5F8;"><i class="ph ph-power" style="font-size:15px; color:#475467;"></i></button>
+                <button type="button" style="width:34px; height:34px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px solid #E7E9EF; border-radius:8px; cursor:pointer;" style-hover="background:#FEF3F2; border-color:#FDA29B;"><i class="ph ph-trash" style="font-size:15px; color:#B42318;"></i></button>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isPayments }}" hint-placeholder-val="{{ false }}">
+        <section>
+          <div style="display:flex; gap:6px; background:#EDEFF3; border-radius:10px; padding:4px; width:fit-content; margin-bottom:18px;">
+            <sc-for list="{{ payTabs }}" as="t" hint-placeholder-count="4">
+              <span style="display:flex; align-items:center; gap:7px; border-radius:7px; background:{{ t.bg }}; color:{{ t.color }}; font-size:13.5px; font-weight:600; padding:7px 14px;">{{ t.label }}<span class="num" style="font-size:11.5px; color:{{ t.countColor }};">{{ t.count }}</span></span>
+            </sc-for>
+          </div>
+          <div style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; padding:52px 30px; text-align:center;">
+            <span style="width:56px; height:56px; display:inline-flex; align-items:center; justify-content:center; background:#ECFDF3; color:#12B76A; border-radius:14px;"><i class="ph-fill ph-receipt" style="font-size:28px;"></i></span>
+            <h2 style="font-size:20px; font-weight:700; margin:16px 0 6px;">كل الإيصالات مؤكَّدة</h2>
+            <p style="margin:0 auto 20px; max-width:470px; font-size:14.5px; color:#667085;">حين يرسل العميل إيصالاً عبر البوت يظهر هنا للتحقق، وبتأكيده تتقدّم الصفقة مرحلة بنفسها. آخر تأكيد قبل ساعتين — <span class="num" style="font-weight:600; color:#101828;">400 ₪</span> من مركز المتحدي.</p>
+            <button type="button" style="background:#5B4CE0; color:#fff; border:0; border-radius:9px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;" style-hover="background:#4B3ECB;">سجّل دفعة يدوياً</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#fff; border:1px solid #E7E9EF; border-radius:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid #EEF0F4;">
+            <span style="font-size:15.5px; font-weight:600;">الأعضاء الفعّالون</span>
+            <span class="num" style="font-size:12px; font-weight:600; color:#5B4CE0; background:#EFEDFC; border-radius:999px; padding:1px 8px;">4</span>
+            <span style="margin-inline-start:auto; font-size:12.5px; color:#B54708; background:#FFFAEB; border-radius:999px; padding:3px 10px;">النظام مصمَّم لـ3 مقاعد</span>
+          </div>
+          <sc-for list="{{ team }}" as="m" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:16px; padding:15px 18px; border-bottom:1px solid #F2F4F7;" style-hover="background:#FAFBFC;">
+              <span style="width:38px; height:38px; flex:0 0 38px; display:flex; align-items:center; justify-content:center; background:{{ m.color }}; color:#fff; font-size:13px; font-weight:600; border-radius:50%;">{{ m.initials }}</span>
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:14.5px; font-weight:600;">{{ m.name }}</span>
+                  <span style="font-size:11px; font-weight:600; color:{{ m.roleFg }}; background:{{ m.roleBg }}; border-radius:6px; padding:2px 8px;">{{ m.role }}</span>
+                </div>
+                <div class="num" style="font-size:12.5px; color:#667085;">{{ m.email }}</div>
+              </div>
+              <span style="font-size:12.5px; color:#667085;">{{ m.last }}</span>
+              <button type="button" style="background:#fff; border:1px solid #E7E9EF; border-radius:8px; padding:7px 13px; font-size:13px; font-weight:600; color:#344054; cursor:pointer;" style-hover="background:#F4F5F8;">عدّل</button>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;emptyStates&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { screen: 'today', pipeline: 0 };
+
+  money(n) { return n.toLocaleString('en-US'); }
+
+  renderVals() {
+    const empty = !!this.props.emptyStates;
+    const s = this.state.screen;
+    const P = '#5B4CE0', ink = '#101828', mut = '#667085';
+    const ST = { new: '#98A2B3', bot: '#3B9BE8', agreed: '#7B61FF', wait: '#F5A623', paid: '#12B76A', done: '#0E9F6E', lost: '#F04438' };
+
+    const navDef = [
+      ['today', 'اليوم', 'ph-sun', ''],
+      ['deals', 'الصفقات', 'ph-kanban', ''],
+      ['contacts', 'جهات الاتصال', 'ph-users-three', ''],
+      ['orgs', 'الجهات', 'ph-buildings', ''],
+      ['subs', 'الاشتراكات', 'ph-arrows-clockwise', '2'],
+      ['payments', 'المدفوعات', 'ph-credit-card', ''],
+      ['reports', 'التقارير', 'ph-chart-bar', ''],
+      ['products', 'المنتجات', 'ph-package', ''],
+      ['team', 'الفريق', 'ph-user-gear', ''],
+    ];
+    const nav = navDef.map(([key, label, icon, badge]) => {
+      const on = s === key;
+      return {
+        label, badge,
+        icon: (on ? 'ph-fill ' : 'ph ') + icon,
+        bg: on ? '#5B4CE0' : 'transparent',
+        color: on ? '#fff' : '#C9CCE0',
+        weight: on ? 600 : 400,
+        iconOpacity: on ? 1 : 0.85,
+        badgeBg: badge ? (on ? 'rgba(255,255,255,.25)' : '#F5A623') : 'transparent',
+        badgeColor: badge ? '#fff' : 'transparent',
+      };
+    }).map((n, i) => ({ ...n, go: () => this.setState({ screen: navDef[i][0] }) }));
+
+    const heads = {
+      today: ['لوحة العمل', 'اليوم', 'كل ما يتطلّب انتباهك في مكان واحد: المال، المهام، والصفقات المتوقفة.', [['سجّل دفعة', 'ph-receipt', 1], ['أضف تذكيراً', 'ph-bell-ringing', 0]]],
+      deals: ['لوحة العمل', 'الصفقات', 'كل بطاقة عميل مهتمّ بمنتج. اسحبها للمرحلة التالية كلما تقدّمت معك.', [['أضف صفقة', 'ph-plus', 1]]],
+      contacts: ['العملاء', 'جهات الاتصال', 'كل شخص تعاملت معه مسجَّل مرة واحدة، حتى لو حصل على أكثر من خدمة.', [['استورد من Excel', 'ph-upload-simple', 0], ['أضف جهة اتصال', 'ph-plus', 1]]],
+      orgs: ['العملاء', 'الجهات', 'العيادات والشركات والمحال. الأشخاص يتغيّرون، أما الجهة فتبقى عميلك.', [['أضف جهة', 'ph-plus', 1]]],
+      subs: ['المال', 'الاشتراكات', 'دخلك الثابت وموعد كل تجديد قبل أن يفوت.', [['أضف اشتراكاً', 'ph-plus', 1]]],
+      payments: ['المال', 'المدفوعات', 'الإيصالات التي تنتظر التأكيد تظهر أولاً. أكّدها لتنتقل الصفقة تلقائياً.', [['سجّل دفعة', 'ph-plus', 1]]],
+      reports: ['المال', 'التقارير', 'الأرقام التي تحتاجها لاتخاذ القرار، دون فتح أي ملف Excel.', [['صدّر PDF', 'ph-download-simple', 0]]],
+      products: ['الإعدادات', 'المنتجات', 'الدورات والاشتراكات والخدمات. نوع المنتج يحدّد مسار صفقاته.', [['أضف منتجاً', 'ph-plus', 1]]],
+      team: ['الإعدادات', 'الفريق', 'من يستطيع الدخول إلى النظام، ولكل شخص حسابه المستقل.', [['أضف عضواً', 'ph-plus', 1]]],
+    };
+    const h = heads[s];
+
+    const tag = (name) => {
+      const map = {
+        'دورة المعلم الرقمي': ['#EFEDFC', '#4B3ECB'],
+        'ورشة المعلم الرقمي': ['#FFFAEB', '#B54708'],
+        'ورشة Ai Designer': ['#F2F4F7', '#475467'],
+        'باقة starter': ['#FDF2F8', '#B4257A'],
+        'باقة pro': ['#E9F5FE', '#0B5A8A'],
+        'صيانة شهرية': ['#ECFDF3', '#027A48'],
+      };
+      const [bg, fg] = map[name] || ['#F2F4F7', '#475467'];
+      return { tagBg: bg, tagFg: fg };
+    };
+
+    const pipes = [
+      { name: 'الأكاديمية', count: 14, value: '1,850 ₪', columns: [
+        { name: 'جديد', color: ST.new, cards: [
+          { name: 'سُهى مرعي', org: 'مستقلة · غزة', value: 150, owner: 'ر', product: 'دورة المعلم الرقمي', age: 'منذ 4 ساعات' },
+          { name: 'أحمد الشوا', org: 'مدرسة النور', value: 150, owner: 'م', product: 'دورة المعلم الرقمي', age: 'منذ 9 ساعات' },
+        ] },
+        { name: 'تواصل مع البوت', color: ST.bot, cards: [
+          { name: 'لينا حمدان', org: 'مدرسة بيت لحم', value: 150, owner: 'ر', product: 'دورة المعلم الرقمي', age: 'منذ 19 ساعة' },
+          { name: 'خالد أبو ندى', org: 'مستقل · رام الله', value: 50, owner: 'م', product: 'ورشة Ai Designer', age: 'منذ يوم' },
+          { name: 'رشا زعيتر', org: 'أكاديمية المستقبل', value: 150, owner: 'ر', product: 'دورة المعلم الرقمي', age: 'منذ 6 ساعات' },
+        ] },
+        { name: 'وافق على التسجيل', color: ST.agreed, cards: [
+          { name: 'جهاد حجازي', org: 'مركز المتحدي', value: 150, owner: 'م', product: 'دورة المعلم الرقمي', age: 'منذ 3 أيام', stuck: true },
+          { name: 'نور صيام', org: 'مدرسة الأمل', value: 50, owner: 'ر', product: 'ورشة المعلم الرقمي', age: 'منذ 14 ساعة' },
+        ] },
+        { name: 'بانتظار الدفع', color: ST.wait, cards: [
+          { name: 'وسيم الأغا', org: 'مستقل · خان يونس', value: 150, owner: 'م', product: 'دورة المعلم الرقمي', age: 'منذ 4 أيام', stuck: true },
+          { name: 'دعاء قاسم', org: 'مدرسة الرسالة', value: 50, owner: 'ر', product: 'ورشة Ai Designer', age: 'منذ 22 ساعة' },
+        ] },
+        { name: 'دفع', color: ST.paid, cards: [
+          { name: 'مي الترك', org: 'أكاديمية المستقبل', value: 150, owner: 'ر', product: 'دورة المعلم الرقمي', age: 'منذ 3 ساعات' },
+        ] },
+        { name: 'حضر', color: ST.done, cards: [
+          { name: 'عبدالله ريان', org: 'مدرسة النور', value: 150, owner: 'م', product: 'دورة المعلم الرقمي', age: 'منذ 6 أيام' },
+          { name: 'هبة نصار', org: 'مستقلة · نابلس', value: 50, owner: 'ر', product: 'ورشة المعلم الرقمي', age: 'منذ 8 أيام' },
+        ] },
+        { name: 'خسرناه', color: ST.lost, cards: [
+          { name: 'سامر بشير', org: 'مدرسة القدس', value: 150, owner: 'م', product: 'دورة المعلم الرقمي', age: 'منذ 11 يوماً' },
+        ] },
+      ] },
+      { name: 'مجيب وسمارت كلينيك', count: 9, value: '5,100 ₪', columns: [
+        { name: 'جديد', color: ST.new, cards: [
+          { name: 'عيادة الشفاء', org: 'عيادة · غزة', value: 400, owner: 'م', product: 'باقة starter', age: 'منذ 5 ساعات' },
+        ] },
+        { name: 'مكالمة تعارف', color: ST.bot, cards: [
+          { name: 'صالون لمسة', org: 'صالون · رام الله', value: 400, owner: 'ر', product: 'باقة starter', age: 'منذ يوم' },
+          { name: 'مركز سمارت كير', org: 'عيادة · الخليل', value: 900, owner: 'م', product: 'باقة pro', age: 'منذ 18 ساعة' },
+        ] },
+        { name: 'أرسلنا عرض سعر', color: ST.agreed, cards: [
+          { name: 'عيادة الأسنان الحديثة', org: 'عيادة · نابلس', value: 900, owner: 'م', product: 'باقة pro', age: 'منذ يومين', stuck: true },
+        ] },
+        { name: 'تجربة', color: ST.wait, cards: [
+          { name: 'مركز المتحدي للتأهيل', org: 'عيادة · مسقط', value: 400, owner: 'ر', product: 'باقة starter', age: 'منذ 3 أيام', stuck: true },
+          { name: 'متجر بيتنا', org: 'محل · غزة', value: 400, owner: 'م', product: 'باقة starter', age: 'منذ 20 ساعة' },
+        ] },
+        { name: 'تعاقد', color: ST.paid, cards: [
+          { name: 'عيادة النخبة', org: 'عيادة · رام الله', value: 900, owner: 'ر', product: 'باقة pro', age: 'منذ يوم' },
+          { name: 'صالون روز', org: 'صالون · بيت لحم', value: 400, owner: 'م', product: 'باقة starter', age: 'منذ 5 أيام' },
+        ] },
+        { name: 'خسرناه', color: ST.lost, cards: [
+          { name: 'مركز الرؤية', org: 'عيادة · جنين', value: 400, owner: 'م', product: 'باقة starter', age: 'منذ 9 أيام' },
+        ] },
+      ] },
+    ];
+    const pipe = pipes[this.state.pipeline];
+    const ownerColors = { 'ر': '#5B4CE0', 'م': '#3B9BE8' };
+
+    return {
+      crumb: h[0], title: h[1], subtitle: h[2],
+      actions: h[3].map(([label, icon, primary]) => ({
+        label, icon,
+        bg: primary ? P : '#fff', fg: primary ? '#fff' : '#344054', border: primary ? P : '#E7E9EF',
+      })),
+      nav,
+      isToday: s === 'today', isDeals: s === 'deals', isContacts: s === 'contacts',
+      isOrgs: s === 'orgs', isSubs: s === 'subs', isReports: s === 'reports',
+      isProducts: s === 'products', isPayments: s === 'payments', isTeam: s === 'team',
+      full: !empty, empty,
+
+      kpis: [
+        { label: 'قيمة الصفقات المفتوحة', value: '6,450', tone: P, icon: 'ph-target', iconBg: '#EFEDFC', delta: '+12%', deltaColor: '#027A48', deltaBg: '#ECFDF3', sub: '23 صفقة، منها 4 بانتظار الدفع' },
+        { label: 'حصّلته هذا الشهر', value: '3,900', tone: '#12B76A', icon: 'ph-wallet', iconBg: '#ECFDF3', delta: '+8%', deltaColor: '#027A48', deltaBg: '#ECFDF3', sub: 'دفعات مؤكَّدة منذ أول الشهر' },
+        { label: 'بِعته ولم تقبضه', value: '1,050', tone: '#B54708', icon: 'ph-hourglass-medium', iconBg: '#FFFAEB', delta: '3 صفقات', deltaColor: '#B54708', deltaBg: '#FFFAEB', sub: 'وصلت مرحلة الدفع ولم يُسجَّل مقابلها' },
+        { label: 'الإيراد الشهري المتكرر', value: '3,400', tone: ink, icon: 'ph-arrows-clockwise', iconBg: '#E9F5FE', delta: '+18%', deltaColor: '#027A48', deltaBg: '#ECFDF3', sub: 'تجديدان مستحقّان هذا الأسبوع' },
+      ],
+      dueToday: [
+        { title: 'أول تواصل', who: 'سُهى مرعي', when: '10:30', product: 'دورة المعلم الرقمي', value: '150 ₪', ...tag('دورة المعلم الرقمي') },
+        { title: 'متابعة عرض السعر', who: 'عيادة الأسنان الحديثة', when: '12:00', product: 'باقة pro', value: '900 ₪', ...tag('باقة pro') },
+        { title: 'تأكيد موعد التجربة', who: 'متجر بيتنا', when: '14:00', product: 'باقة starter', value: '400 ₪', ...tag('باقة starter') },
+        { title: 'إرسال رابط الدفع', who: 'دعاء قاسم', when: '16:30', product: 'ورشة Ai Designer', value: '50 ₪', ...tag('ورشة Ai Designer') },
+      ],
+      overdue: [
+        { title: 'أول تواصل', who: 'جهاد حجازي · دورة المعلم الرقمي', when: 'متأخرة يومين', value: '150 ₪' },
+        { title: 'متابعة إيصال الدفع', who: 'وسيم الأغا · دورة المعلم الرقمي', when: 'متأخرة 4 أيام', value: '150 ₪' },
+      ],
+      stuck: [
+        { name: 'مركز المتحدي للتأهيل', stage: 'تجربة', stageColor: ST.wait, age: 'منذ 3 أيام', value: '400 ₪' },
+        { name: 'عيادة الأسنان الحديثة', stage: 'عرض سعر', stageColor: ST.agreed, age: 'منذ يومين', value: '900 ₪' },
+        { name: 'وسيم الأغا', stage: 'بانتظار الدفع', stageColor: ST.wait, age: 'منذ 4 أيام', value: '150 ₪' },
+      ],
+      receipts: [
+        { name: 'مي الترك', product: 'دورة المعلم الرقمي', method: 'حوالة بنكية', value: '150 ₪' },
+        { name: 'صالون روز', product: 'باقة starter', method: 'محفظة', value: '400 ₪' },
+      ],
+
+      pipelines: pipes.map((p, i) => {
+        const on = i === this.state.pipeline;
+        return { name: p.name, bg: on ? '#fff' : 'transparent', color: on ? ink : mut, go: () => this.setState({ pipeline: i }) };
+      }),
+      filters: [{ label: 'جميع المنتجات' }, { label: 'جميع المسؤولين' }, { label: 'هذا الشهر' }],
+      dealCount: pipe.count, dealValue: pipe.value,
+      columns: pipe.columns.map((c) => ({
+        name: c.name, color: c.color, count: c.cards.length,
+        value: this.money(c.cards.reduce((t, d) => t + d.value, 0)) + ' ₪',
+        cards: c.cards.map((d) => ({
+          name: d.name, org: d.org, product: d.product, owner: d.owner,
+          ownerColor: ownerColors[d.owner],
+          value: this.money(d.value) + ' ₪',
+          age: d.age,
+          ageColor: d.stuck ? '#B54708' : '#98A2B3',
+          ageBg: d.stuck ? '#FFFAEB' : '#F2F4F7',
+          ...tag(d.product),
+        })),
+      })),
+
+      contactCount: 7,
+      contacts: [
+        { name: 'جهاد حجازي', initials: 'جح', color: '#5B4CE0', phone: '+970567943110', org: 'مركز المتحدي للتأهيل', source: 'بوت واتساب', deals: 2, last: 'قبل 3 أيام', owner: 'منشق' },
+        { name: 'سُهى مرعي', initials: 'سم', color: '#3B9BE8', phone: '+970599201884', org: '—', source: 'إعلان فيسبوك', deals: 1, last: 'قبل ساعة', owner: 'رنيم' },
+        { name: 'لينا حمدان', initials: 'لح', color: '#12B76A', phone: '+970598114290', org: 'مدرسة بيت لحم', source: 'توصية', deals: 1, last: 'أمس', owner: 'رنيم' },
+        { name: 'د. سامي عودة', initials: 'سع', color: '#F5A623', phone: '+970595770311', org: 'عيادة الأسنان الحديثة', source: 'ورشة', deals: 3, last: 'قبل يومين', owner: 'منشق' },
+        { name: 'وسيم الأغا', initials: 'وأ', color: '#7B61FF', phone: '+970569330147', org: '—', source: 'بوت واتساب', deals: 1, last: 'قبل 4 أيام', owner: 'منشق' },
+        { name: 'مي الترك', initials: 'مت', color: '#0E9F6E', phone: '+970597441028', org: 'أكاديمية المستقبل', source: 'توصية', deals: 2, last: 'قبل 3 ساعات', owner: 'رنيم' },
+        { name: 'خالد أبو ندى', initials: 'خن', color: '#98A2B3', phone: '+970568920755', org: '—', source: 'إعلان فيسبوك', deals: 1, last: 'أمس', owner: 'منشق' },
+      ],
+
+      orgs: [
+        { name: 'مركز المتحدي للتأهيل', type: 'عيادة', city: 'مسقط', people: 3, deals: 2, mrr: '400 ₪/شهر', mrrColor: '#027A48', mrrBg: '#ECFDF3', iconBg: '#EFEDFC', iconFg: '#5B4CE0' },
+        { name: 'عيادة الأسنان الحديثة', type: 'عيادة', city: 'نابلس', people: 2, deals: 3, mrr: 'لا اشتراك', mrrColor: '#667085', mrrBg: '#F2F4F7', iconBg: '#E9F5FE', iconFg: '#0B5A8A' },
+        { name: 'أكاديمية المستقبل', type: 'مدرسة', city: 'رام الله', people: 4, deals: 5, mrr: '900 ₪/شهر', mrrColor: '#027A48', mrrBg: '#ECFDF3', iconBg: '#FFFAEB', iconFg: '#B54708' },
+        { name: 'صالون روز', type: 'صالون', city: 'بيت لحم', people: 1, deals: 1, mrr: '400 ₪/شهر', mrrColor: '#027A48', mrrBg: '#ECFDF3', iconBg: '#FDF2F8', iconFg: '#B4257A' },
+        { name: 'مدرسة النور', type: 'مدرسة', city: 'غزة', people: 6, deals: 4, mrr: 'لا اشتراك', mrrColor: '#667085', mrrBg: '#F2F4F7', iconBg: '#ECFDF3', iconFg: '#027A48' },
+        { name: 'عيادة النخبة', type: 'عيادة', city: 'رام الله', people: 2, deals: 2, mrr: '900 ₪/شهر', mrrColor: '#027A48', mrrBg: '#ECFDF3', iconBg: '#EFEDFC', iconFg: '#5B4CE0' },
+      ],
+
+      mrr: '3,400', subCount: 7,
+      subMix: [
+        { name: 'باقة pro', amount: '1,800 ₪', pct: '53%', color: '#5B4CE0' },
+        { name: 'باقة starter', amount: '1,200 ₪', pct: '35%', color: '#3B9BE8' },
+        { name: 'صيانة شهرية', amount: '400 ₪', pct: '12%', color: '#F5A623' },
+      ],
+      subs: [
+        { name: 'مركز المتحدي للتأهيل', plan: 'باقة starter', amount: '400 ₪', renew: 'متأخر 6 أيام', renewFg: '#B42318', renewBg: '#FEE4E2', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'عيادة النخبة', plan: 'باقة pro', amount: '900 ₪', renew: 'بعد 3 أيام', renewFg: '#B54708', renewBg: '#FFFAEB', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'أكاديمية المستقبل', plan: 'باقة pro', amount: '900 ₪', renew: 'بعد 11 يوماً', renewFg: '#475467', renewBg: '#F2F4F7', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'صالون روز', plan: 'باقة starter', amount: '400 ₪', renew: 'بعد 14 يوماً', renewFg: '#475467', renewBg: '#F2F4F7', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'متجر بيتنا', plan: 'باقة starter', amount: '400 ₪', renew: 'بعد 19 يوماً', renewFg: '#475467', renewBg: '#F2F4F7', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'مدرسة النور', plan: 'صيانة شهرية', amount: '400 ₪', renew: 'بعد 24 يوماً', renewFg: '#475467', renewBg: '#F2F4F7', status: 'فعّال', statusFg: '#027A48' },
+        { name: 'مركز الرؤية', plan: 'باقة starter', amount: '400 ₪', renew: '—', renewFg: '#475467', renewBg: '#F2F4F7', status: 'منتهٍ', statusFg: '#B42318' },
+      ],
+
+      money: [
+        { label: 'قيمة الصفقات المفتوحة', value: '6,450', tone: P, sub: 'مال متوقَّع، لم يُحسم بعد' },
+        { label: 'قيمة الصفقات الناجحة', value: '4,950', tone: ink, sub: 'ما اتُّفق عليه فعلاً' },
+        { label: 'المقبوض', value: '3,900', tone: '#12B76A', sub: 'دفعات مؤكَّدة دخلت الصندوق' },
+        { label: 'بِعته ولم تقبضه', value: '1,050', tone: '#B54708', sub: 'الفرق بين ما بِعته وما قبضته' },
+      ],
+      conversion: [
+        { pipeline: 'الأكاديمية', rate: '62', won: 13, lost: 8, pct: '62%' },
+        { pipeline: 'مجيب وسمارت كلينيك', rate: '44', won: 7, lost: 9, pct: '44%' },
+      ],
+      monthly: [
+        { month: 'مارس', value: '1,850', h: '38%', color: '#DCD9F7' },
+        { month: 'أبريل', value: '2,400', h: '49%', color: '#DCD9F7' },
+        { month: 'مايو', value: '2,100', h: '43%', color: '#DCD9F7' },
+        { month: 'يونيو', value: '3,150', h: '65%', color: '#DCD9F7' },
+        { month: 'يوليو', value: '4,850', h: '100%', color: '#DCD9F7' },
+        { month: 'أغسطس', value: '3,900', h: '80%', color: '#5B4CE0' },
+      ],
+      stageBars: [
+        { name: 'جديد', label: '3 · 700 ₪', pct: '20%', color: ST.new },
+        { name: 'تواصل مع البوت', label: '5 · 1,750 ₪', pct: '48%', color: ST.bot },
+        { name: 'وافق على التسجيل', label: '4 · 1,100 ₪', pct: '32%', color: ST.agreed },
+        { name: 'بانتظار الدفع', label: '4 · 1,050 ₪', pct: '30%', color: ST.wait },
+        { name: 'دفع / تعاقد', label: '4 · 2,350 ₪', pct: '66%', color: ST.paid },
+        { name: 'خسرناه', label: '3 · 950 ₪', pct: '26%', color: ST.lost },
+      ],
+      lost: [
+        { reason: 'السعر أعلى من ميزانيته', count: 6 },
+        { reason: 'لم يرد بعد ثلاث محاولات', count: 5 },
+        { reason: 'اختار حلاً آخر', count: 3 },
+        { reason: 'أجّل القرار للفصل القادم', count: 3 },
+      ],
+
+      productCount: 6,
+      products: [
+        { name: 'دورة المعلم الرقمي', kind: 'دورة', note: 'مسار الأكاديمية', price: '150', sold: '38 مبيعاً', color: '#5B4CE0', icon: 'ph-graduation-cap' },
+        { name: 'باقة starter', kind: 'اشتراك', note: 'تجديد شهري', price: '400', sold: '5 اشتراكات', color: '#3B9BE8', icon: 'ph-arrows-clockwise' },
+        { name: 'باقة pro', kind: 'اشتراك', note: 'تجديد شهري', price: '900', sold: 'اشتراكان', color: '#0E9F6E', icon: 'ph-arrows-clockwise' },
+        { name: 'ورشة المعلم الرقمي', kind: 'دورة', note: 'يوم واحد', price: '50', sold: '21 مبيعاً', color: '#F5A623', icon: 'ph-presentation-chart' },
+        { name: 'ورشة Ai Designer', kind: 'دورة', note: 'يوم واحد', price: '50', sold: '17 مبيعاً', color: '#7B61FF', icon: 'ph-presentation-chart' },
+        { name: 'صيانة شهرية', kind: 'خدمة', note: 'عقد سنوي', price: '400', sold: 'اشتراك 1', color: '#98A2B3', icon: 'ph-wrench' },
+      ],
+      payTabs: [
+        { label: 'بانتظار التحقق', count: 0, bg: '#fff', color: ink, countColor: mut },
+        { label: 'مؤكَّدة', count: 26, bg: 'transparent', color: mut, countColor: '#98A2B3' },
+        { label: 'غير مدفوعة', count: 4, bg: 'transparent', color: mut, countColor: '#98A2B3' },
+        { label: 'الجميع', count: 30, bg: 'transparent', color: mut, countColor: '#98A2B3' },
+      ],
+      team: [
+        { name: 'أحمد المدير', initials: 'أم', color: '#5B4CE0', email: 'owner@makeflow.ps', role: 'مدير', roleFg: '#4B3ECB', roleBg: '#EFEDFC', last: 'آخر دخول قبل 3 أيام' },
+        { name: 'منشق المبيعات', initials: 'مم', color: '#3B9BE8', email: 'sales@makeflow.ps', role: 'مبيعات', roleFg: '#0B5A8A', roleBg: '#E9F5FE', last: 'لم يدخل بعد' },
+        { name: 'المشغّل', initials: 'مش', color: '#12B76A', email: 'ops@makeflow.ps', role: 'تشغيل', roleFg: '#027A48', roleBg: '#ECFDF3', last: 'لم يدخل بعد' },
+        { name: 'رنيم', initials: 'ر', color: '#F5A623', email: 'raneem@makeflow.tech', role: 'مبيعات', roleFg: '#0B5A8A', roleBg: '#E9F5FE', last: 'آخر دخول قبل يوم' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

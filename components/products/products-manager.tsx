@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Package, Pencil, Plus, Power, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Chip } from '@/components/ui/pill'
 import { Button } from '@/components/ui/button'
 import { FieldError, Input, Label } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -23,7 +24,7 @@ const KINDS: { value: ProductKind; label: string; hint: string }[] = [
 const PALETTE = ['#5B4CE0', '#3B9BE8', '#7B61FF', '#F5A623', '#22C55E', '#0EA47A', '#E8639B', '#E5484D']
 
 const selectClass =
-  'h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+  'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
 
 export function ProductsManager({ products }: { products: Product[] }) {
   const router = useRouter()
@@ -152,26 +153,31 @@ function Row({
 }) {
   return (
     <section>
-      <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
+      <h2 className="mb-3 flex items-center gap-2 text-section font-semibold text-ink">
         {title}
-        <span className="num rounded-pill bg-page px-2 py-0.5 text-xs font-bold text-ink-muted">
-          {items.length}
-        </span>
+        <Chip tone="neutral" className="num">{items.length}</Chip>
       </h2>
 
-      <Card className="divide-y divide-line overflow-hidden">
+      <Card className="divide-y divide-line-soft overflow-hidden">
         {items.map((p) => (
-          <div key={p.id} className={cn('row flex flex-wrap items-center gap-4 px-6 py-3', muted && 'opacity-70')}>
-            <span className="h-8 w-8 shrink-0 rounded-input" style={{ backgroundColor: p.color }} aria-hidden />
+          <div key={p.id} className={cn('row flex flex-wrap items-center gap-3 px-4.5 py-3', muted && 'opacity-70')}>
+            <span
+              className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-chip text-white"
+              style={{ backgroundColor: p.color }}
+              aria-hidden
+            >
+              <Package className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </span>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-ink">{p.name}</p>
-              <p className="truncate text-xs text-ink-muted">
+              <p className="truncate text-body-lg font-semibold text-ink">{p.name}</p>
+              <p className="truncate text-faint text-ink-muted">
                 {KINDS.find((k) => k.value === p.kind)?.label}
+                {!p.active && ' · موقوف'}
               </p>
             </div>
 
-            <span className="num w-[110px] text-sm font-bold text-ink">
+            <span className="num w-[110px] shrink-0 text-[16px] font-bold text-ink">
               {p.default_price ? formatMoney(p.default_price, p.currency) : '—'}
             </span>
 
@@ -187,7 +193,7 @@ function Row({
               <Button
                 size="sm" variant="ghost" disabled={pending}
                 onClick={() => onDelete(p)}
-                className="text-ink-muted hover:text-danger"
+                className="text-ink-muted hover:bg-[#FEF3F2] hover:text-chip-danger-fg"
                 aria-label={`احذف ${p.name}`}
               >
                 <Trash2 className="h-4 w-4" />

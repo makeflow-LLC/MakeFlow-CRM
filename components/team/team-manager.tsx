@@ -3,11 +3,12 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Check, Copy, KeyRound, Pencil, Plus, Power, ShieldCheck, Trash2, UserPlus, Users,
+  Check, Copy, KeyRound, Pencil, Plus, Power, Trash2, UserPlus, Users,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
+import { Chip, type ChipTone } from '@/components/ui/pill'
 import { FieldError, Input, Label } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { PhoneInput } from '@/components/ui/phone-input'
@@ -29,6 +30,13 @@ const ROLES: { value: Role; label: string; hint: string }[] = [
 
 const roleLabel = (r: Role) => ROLES.find((x) => x.value === r)?.label ?? r
 
+/** لون شريحة الدور: المدير أساسي، المبيعات أزرق، التشغيل أخضر */
+const ROLE_TONES: Record<Role, ChipTone> = {
+  admin: 'accent',
+  sales: 'blue',
+  operator: 'success',
+}
+
 /** ألوان الصورة الرمزية — نفس لوحة النظام */
 const PALETTE = ['#5B4CE0', '#3B9BE8', '#7B61FF', '#F5A623', '#22C55E', '#0EA47A', '#E8639B', '#E5484D']
 
@@ -36,7 +44,7 @@ const PALETTE = ['#5B4CE0', '#3B9BE8', '#7B61FF', '#F5A623', '#22C55E', '#0EA47A
 const PLANNED_SEATS = 3
 
 const selectClass =
-  'h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+  'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
 
 type Tone = 'error' | 'success'
 
@@ -86,12 +94,10 @@ export function TeamManager({ view }: { view: TeamView }) {
             أضف عضواً
           </Button>
           {active.length >= PLANNED_SEATS && (
-            <p className="text-xs leading-relaxed text-ink-muted">
-              الفريق الآن{' '}
-              <span className="num font-bold text-ink">{active.length}</span> أعضاء فعّالين.
-              النظام مصمَّم لـ<span className="num"> {PLANNED_SEATS} </span>أشخاص، وما زاد يعمل
-              لكنه يستحقّ مراجعة الأدوار.
-            </p>
+            <Chip tone="warn">
+              النظام مصمَّم لـ<span className="num">{PLANNED_SEATS}</span> مقاعد، والفريق الآن{' '}
+              <span className="num">{active.length}</span>
+            </Chip>
           )}
         </div>
       )}
@@ -219,43 +225,31 @@ function MemberList({
 }) {
   return (
     <section>
-      <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
+      <h2 className="mb-3 flex items-center gap-2 text-section font-semibold text-ink">
         {title}
-        <span className="num rounded-pill bg-page px-2 py-0.5 text-xs font-bold text-ink-muted">
-          {members.length}
-        </span>
+        <Chip tone="neutral" className="num">{members.length}</Chip>
       </h2>
 
-      <Card className="divide-y divide-line overflow-hidden">
+      <Card className="divide-y divide-line-soft overflow-hidden">
         {members.map((m) => (
           <div
             key={m.id}
-            className={cn('row flex flex-wrap items-center gap-4 px-6 py-4', muted && 'opacity-70')}
+            className={cn('row flex flex-wrap items-center gap-3 px-4.5 py-3', muted && 'opacity-70')}
           >
-            <Avatar name={m.full_name} color={m.avatar_color} />
+            <Avatar name={m.full_name} color={m.avatar_color} className="h-[38px] w-[38px] text-[13px]" />
 
             <div className="min-w-0 flex-1">
-              <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-ink">
+              <p className="flex flex-wrap items-center gap-2 text-body-lg font-semibold text-ink">
                 {m.full_name}
-                {m.id === viewerId && (
-                  <span className="rounded-pill bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
-                    أنت
-                  </span>
-                )}
-                {m.role === 'admin' && (
-                  <ShieldCheck className="h-4 w-4 text-accent" aria-label="مدير" />
-                )}
+                <Chip tone={ROLE_TONES[m.role]}>{roleLabel(m.role)}</Chip>
+                {m.id === viewerId && <Chip tone="neutral">أنت</Chip>}
               </p>
-              <p className="num truncate text-xs text-ink-muted" dir="ltr">
+              <p className="num truncate text-faint text-ink-muted" dir="ltr">
                 {m.email ?? '—'}
               </p>
             </div>
 
-            <span className="w-[72px] shrink-0 text-xs font-semibold text-ink-muted">
-              {roleLabel(m.role)}
-            </span>
-
-            <span className="w-[130px] shrink-0 text-xs text-ink-muted">
+            <span className="w-[130px] shrink-0 text-faint text-ink-muted">
               {!m.active
                 ? 'معطَّل'
                 : m.last_sign_in_at

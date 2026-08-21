@@ -6,7 +6,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        'h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 placeholder:text-ink-muted hover:border-[#D3D8E3] focus:border-accent focus:outline-none',
+        'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 placeholder:text-ink-faint hover:border-[#D3D8E3] focus:border-accent focus:outline-none',
         className,
       )}
       {...props}
@@ -22,7 +22,7 @@ export const Textarea = React.forwardRef<
   <textarea
     ref={ref}
     className={cn(
-      'w-full rounded-input border border-line bg-card p-3 text-sm text-ink transition-colors duration-150 placeholder:text-ink-muted hover:border-[#D3D8E3] focus:border-accent focus:outline-none',
+      'w-full rounded-input border border-line bg-card p-3 text-body text-ink transition-colors duration-150 placeholder:text-ink-faint hover:border-[#D3D8E3] focus:border-accent focus:outline-none',
       className,
     )}
     {...props}
@@ -31,10 +31,10 @@ export const Textarea = React.forwardRef<
 Textarea.displayName = 'Textarea'
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn('flex items-center gap-1 text-sm font-semibold text-ink', className)} {...props} />
+  return <label className={cn('flex items-center gap-1 text-faint font-semibold text-ink', className)} {...props} />
 }
 
 export function FieldError({ children }: { children?: React.ReactNode }) {
   if (!children) return null
-  return <p className="text-xs font-medium text-danger">{children}</p>
+  return <p className="text-chip font-semibold text-chip-danger-fg">{children}</p>
 }

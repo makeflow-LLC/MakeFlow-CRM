@@ -24,7 +24,7 @@ const STATUSES = [
 ] as const
 
 const selectClass =
-  'h-10 w-full rounded-input border border-line bg-card px-3 text-sm text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+  'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
 
 /** التاريخ والوقت الحاليان بصيغة datetime-local */
 function nowLocal(): string {

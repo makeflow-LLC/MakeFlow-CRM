@@ -3,18 +3,19 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, Check, Clock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Check } from 'lucide-react'
+import { Chip } from '@/components/ui/pill'
 import { Toast } from '@/components/ui/toast'
 import { completeTask } from '@/lib/actions'
-import { timeAgo } from '@/lib/utils'
+import { cn, timeAgo } from '@/lib/utils'
 import type { QueueTask } from '@/lib/types'
 
 /**
  * صفّ مهمة في شاشة «اليوم».
  *
- * الإنجاز هنا لا في شاشة أخرى: قائمةٌ لا تُشطب منها المهام تمتلئ خلال
- * أسبوع فيتوقّف صاحبها عن النظر إليها، وعندها تصير الشاشة زينة.
+ * الإنجاز مربّع تأشير لا زر: القائمة تُقرأ كقائمة شطب، وهو ما يفعله الناس
+ * بها فعلاً. وقائمةٌ لا تُشطب منها المهام تمتلئ خلال أسبوع فيتوقّف صاحبها
+ * عن النظر إليها، وعندها تصير الشاشة زينة.
  */
 export function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: boolean }) {
   const router = useRouter()
@@ -22,61 +23,65 @@ export function TaskRow({ task, overdue = false }: { task: QueueTask; overdue?: 
   const [done, setDone] = useState(false)
   const [toast, setToast] = useState<{ msg: string; tone: 'success' | 'error' } | null>(null)
 
+  function complete() {
+    if (pending || done) return
+    startTransition(async () => {
+      const res = await completeTask(task.id)
+      if (res.ok) {
+        setDone(true)
+        setToast({ msg: 'أُنجزت المهمة.', tone: 'success' })
+        router.refresh()
+      } else setToast({ msg: res.error ?? '', tone: 'error' })
+    })
+  }
+
   return (
     <>
       <div
-        className={
-          // الحد على بداية السطر — بالعربي هذا اليمين، وينعكس لحاله بالإنجليزي
-          overdue
-            ? 'row flex flex-wrap items-center gap-4 border-s-4 border-s-danger bg-danger/[0.03] px-6 py-3'
-            : 'row flex flex-wrap items-center gap-4 px-6 py-3'
-        }
-        style={done ? { opacity: 0.45 } : undefined}
+        className={cn(
+          'row flex flex-wrap items-center gap-3 px-4.5 py-3',
+          done && 'opacity-45',
+        )}
       >
-        <span
-          className={
-            overdue
-              ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-danger/12 text-danger'
-              : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-accent-soft text-accent'
-          }
+        <button
+          type="button"
+          onClick={complete}
+          disabled={pending || done}
+          aria-label={done ? 'أُنجزت' : `أنجز: ${task.title}`}
+          className={cn(
+            'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border transition-colors duration-150',
+            done
+              ? 'border-accent bg-accent text-white'
+              : 'border-line bg-card text-transparent hover:border-accent hover:bg-accent-soft hover:text-accent',
+          )}
         >
-          {overdue ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-        </span>
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        </button>
 
         <div className="min-w-0 flex-1">
-          <p className={`truncate text-sm font-bold text-ink ${done ? 'line-through' : ''}`}>
+          <p className={cn('truncate text-body-lg font-semibold text-ink', done && 'line-through')}>
             {task.title}
           </p>
-          <p className="truncate text-xs text-ink-muted">
+          <p className="truncate text-faint text-ink-muted">
             {task.contact ? task.contact.full_name : 'غير مرتبطة بشخص'}
-            {' · '}
-            <span className={overdue ? 'font-semibold text-danger' : ''}>{timeAgo(task.due_at)}</span>
           </p>
         </div>
 
-        <Button
-          size="sm"
-          variant="success"
-          disabled={pending || done}
-          onClick={() => {
-            startTransition(async () => {
-              const res = await completeTask(task.id)
-              if (res.ok) {
-                setDone(true)
-                setToast({ msg: 'أُنجزت المهمة.', tone: 'success' })
-                router.refresh()
-              } else setToast({ msg: res.error ?? '', tone: 'error' })
-            })
-          }}
-        >
-          <Check className="h-4 w-4" />
-          {done ? 'أُنجزت' : 'أنجزتها'}
-        </Button>
+        {overdue ? (
+          <Chip tone="danger" className="shrink-0 whitespace-nowrap">{timeAgo(task.due_at)}</Chip>
+        ) : (
+          <span className="shrink-0 whitespace-nowrap text-faint text-ink-muted">
+            {timeAgo(task.due_at)}
+          </span>
+        )}
 
         {task.contact && (
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/contacts/${task.contact.id}`}>افتح الملف</Link>
-          </Button>
+          <Link
+            href={`/contacts/${task.contact.id}`}
+            className="shrink-0 rounded-input border border-line px-2.5 py-1 text-chip font-semibold text-ink-muted transition-colors duration-150 hover:bg-[#F4F5F8] hover:text-ink"
+          >
+            افتح الملف
+          </Link>
         )}
       </div>
 

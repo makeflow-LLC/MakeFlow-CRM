@@ -11,7 +11,18 @@ import { OwnerAvatar } from '@/components/shared/bits'
 import { AddContact } from '@/components/shared/add-dialogs'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { emptyStates, microcopy } from '@/lib/hints'
-import { formatNumber, timeAgo } from '@/lib/utils'
+import { Chip } from '@/components/ui/pill'
+import { cn, formatNumber, timeAgo } from '@/lib/utils'
+
+/** المصدر بالعربية — يظهر سطراً صغيراً تحت الاسم */
+const SOURCE_LABELS: Record<string, string> = {
+  whatsapp_bot: 'بوت واتساب',
+  facebook_ad: 'إعلان فيسبوك',
+  referral: 'توصية',
+  workshop: 'ورشة',
+  manual: 'إدخال يدوي',
+  other: 'أخرى',
+}
 import type { ContactRow } from '@/lib/types'
 
 export function ContactsTable({ rows }: { rows: ContactRow[] }) {
@@ -28,19 +39,10 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
     )
   }, [rows, query])
 
+  const GRID = 'grid-cols-[minmax(230px,1.5fr)_150px_180px_80px_110px_90px] gap-4'
+
   return (
     <>
-      {/* البحث هو العنصر الأساسي — كبير وفوق */}
-      <div className="relative mb-6">
-        <Search className="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-ink-muted" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={microcopy.buttons.search}
-          className="h-14 w-full rounded-card border border-line bg-card ps-4 pe-12 text-base text-ink shadow-card transition-colors duration-150 placeholder:text-ink-muted hover:border-[#D3D8E3] focus:border-accent focus:outline-none"
-        />
-      </div>
-
       {!rows.length ? (
         <EmptyState
           icon={<Users className="h-7 w-7" />}
@@ -48,64 +50,88 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
           body={emptyStates.contacts.body}
           action={<AddContact contacts={rows} label={emptyStates.contacts.action} />}
         />
-      ) : !filtered.length ? (
-        <EmptyState
-          icon={<Search className="h-7 w-7" />}
-          title={emptyStates.contactsSearch.title}
-          body={emptyStates.contactsSearch.body}
-          action={<AddContact contacts={rows} label={emptyStates.contactsSearch.action} />}
-        />
       ) : (
         <Card className="overflow-hidden">
-          {/* ترويسة الجدول — تظهر على الشاشات الكبيرة فقط */}
-          <div className="hidden items-center gap-4 border-b border-line bg-page/60 px-6 py-3 text-xs font-bold text-ink-muted lg:flex">
-            <span className="flex-1">الاسم</span>
-            <span className="w-[140px]">الهاتف</span>
-            <span className="w-[160px] items-center gap-1 inline-flex">
-              الجهة <HintTooltip term="organization" />
-            </span>
-            <span className="w-[90px] items-center gap-1 inline-flex">
-              الصفقات <HintTooltip term="deal" />
-            </span>
-            <span className="w-[110px] items-center gap-1 inline-flex">
-              آخر نشاط <HintTooltip term="activity" />
-            </span>
-            <span className="w-[70px] items-center gap-1 inline-flex">
-              المسؤول <HintTooltip term="owner" />
+          {/* شريط الأدوات: البحث على اليمين والعدّ على الطرف المقابل */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-4.5 py-3.5">
+            <div className="relative w-full max-w-[280px]">
+              <Search className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={microcopy.buttons.search}
+                className="h-[38px] w-full rounded-input border border-line bg-[#F4F5F8] ps-3 pe-9 text-body text-ink transition-colors duration-150 placeholder:text-ink-faint focus:border-accent focus:bg-card focus:outline-none"
+              />
+            </div>
+            <span className="text-faint text-ink-muted">
+              <span className="num font-semibold text-ink">{formatNumber(filtered.length)}</span>
+              {' من '}
+              <span className="num">{formatNumber(rows.length)}</span>
             </span>
           </div>
 
-          <div className="divide-y divide-line">
-            {filtered.map((c) => (
-              <Link
-                key={c.id}
-                href={`/contacts/${c.id}`}
-                className="row flex flex-wrap items-center gap-4 px-6 py-3 transition-colors duration-150 hover:bg-page"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <Avatar name={c.full_name} color={c.owner?.avatar_color ?? '#9AA4B2'} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-ink">{c.full_name}</p>
-                    <p className="num truncate text-xs text-ink-muted lg:hidden">{c.phone}</p>
-                  </div>
+          {!filtered.length ? (
+            <div className="px-7.5 py-12 text-center">
+              <p className="mb-1 text-section font-semibold text-ink">
+                {emptyStates.contactsSearch.title}
+              </p>
+              <p className="text-body text-ink-muted">{emptyStates.contactsSearch.body}</p>
+            </div>
+          ) : (
+            /* شبكة لا flex: الأعمدة الثابتة تسحق عمود الاسم على الشاشات الضيّقة */
+            <div className="overflow-x-auto scroll-slim">
+              <div className="min-w-[820px]">
+                <div className={cn('thead grid px-4.5 py-3', GRID)}>
+                  <span>الاسم</span>
+                  <span>الهاتف</span>
+                  <span className="inline-flex items-center gap-1">
+                    الجهة <HintTooltip term="organization" />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    الصفقات <HintTooltip term="deal" />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    آخر نشاط <HintTooltip term="activity" />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    المسؤول <HintTooltip term="owner" />
+                  </span>
                 </div>
 
-                <span className="num hidden w-[140px] text-sm text-ink-muted lg:block">{c.phone}</span>
-                <span className="hidden w-[160px] truncate text-sm text-ink-muted lg:block">
-                  {c.organization?.name ?? '—'}
-                </span>
-                <span className="num hidden w-[90px] text-sm font-semibold text-ink lg:block">
-                  {formatNumber(c.deals_count)}
-                </span>
-                <span className="hidden w-[110px] truncate text-xs text-ink-muted lg:block">
-                  {timeAgo(c.last_activity_at)}
-                </span>
-                <span className="hidden w-[70px] lg:block">
-                  <OwnerAvatar owner={c.owner} />
-                </span>
-              </Link>
-            ))}
-          </div>
+                <div className="divide-y divide-line-soft">
+                  {filtered.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/contacts/${c.id}`}
+                      className={cn('row grid items-center px-4.5 py-3', GRID)}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={c.full_name} color={c.owner?.avatar_color ?? '#98A2B3'} />
+                        <div className="min-w-0">
+                          <p className="truncate text-body font-semibold text-ink">{c.full_name}</p>
+                          <p className="truncate text-[11.5px] text-ink-faint">
+                            {SOURCE_LABELS[c.source] ?? '—'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="num truncate text-body text-ink-muted">{c.phone}</span>
+                      <span className="truncate text-body text-ink-muted">
+                        {c.organization?.name ?? '—'}
+                      </span>
+                      <span>
+                        <Chip tone="accent" className="num">{formatNumber(c.deals_count)}</Chip>
+                      </span>
+                      <span className="truncate text-faint text-ink-muted">
+                        {timeAgo(c.last_activity_at)}
+                      </span>
+                      <span><OwnerAvatar owner={c.owner} /></span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
       )}
     </>

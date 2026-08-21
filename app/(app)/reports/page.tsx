@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BarChart3 } from 'lucide-react'
+import { Banknote, BarChart3, HandCoins, Trophy, Wallet } from 'lucide-react'
 import { PageHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { HtmlBars, MonthlyRevenueChart } from '@/components/shared/report-charts'
 import { StatCard } from '@/components/shared/bits'
+import { Chip } from '@/components/ui/pill'
 import { buildReports, getDataset } from '@/lib/data'
 import { emptyStates, pageHints } from '@/lib/hints'
 import { formatMoney, formatNumber } from '@/lib/utils'
@@ -53,45 +54,52 @@ export default async function ReportsPage() {
       <PageHeader title="التقارير" hint={pageHints.reports} />
 
       {/* المال أولاً: من المتوقَّع إلى المقبوض، والفجوة بينهما ظاهرة */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
         <StatCard
           label="قيمة الصفقات المفتوحة" value={r.money.openValue} suffix="ILS" tone="accent"
+          icon={<HandCoins className="h-4 w-4" />}
           sub="مال متوقَّع، لم يُحسم بعد"
         />
         <StatCard
           label="قيمة الصفقات الناجحة" value={r.money.wonValue} suffix="ILS"
+          icon={<Trophy className="h-4 w-4" />}
           sub="ما اتُّفق عليه فعلاً"
         />
         <StatCard
           label="المقبوض" value={r.money.collected} suffix="ILS" tone="success"
+          icon={<Wallet className="h-4 w-4" />}
           sub="دفعات مؤكَّدة دخلت الصندوق"
         />
         <StatCard
           label="بِعته ولم تقبضه" value={r.money.uncollected} suffix="ILS" tone="warn"
+          icon={<Banknote className="h-4 w-4" />}
           sub="الفرق بين ما بِعته وما سجّلت قبضه"
         />
       </div>
 
       {/* نسبة التحويل لكل مسار */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
         {r.conversion.map((c) => (
-          <Card key={c.pipeline} className="p-6">
-            <p className="mb-2 flex items-center gap-1 text-sm font-semibold text-ink-muted">
+          <Card key={c.pipeline} className="p-4.5">
+            <p className="mb-1 flex items-center gap-1 text-[13px] font-medium text-ink-muted">
               نسبة التحويل — {c.pipeline}
               <HintTooltip term="conversionRate" />
             </p>
-            <p className="num mb-3 text-4xl font-bold text-accent">{c.rate}%</p>
-            <div className="flex flex-wrap gap-4 text-xs text-ink-muted">
-              <span>الإجمالي <span className="num font-bold text-ink">{formatNumber(c.total)}</span></span>
-              <span>ناجحة <span className="num font-bold text-success">{formatNumber(c.won)}</span></span>
-              <span>خاسرة <span className="num font-bold text-danger">{formatNumber(c.lost)}</span></span>
+            <p className="num mb-3 text-stat font-bold text-accent">{c.rate}%</p>
+            <div className="mb-3 h-2 overflow-hidden rounded-pill bg-page">
+              <div className="h-full rounded-pill bg-accent" style={{ width: `${c.rate}%` }} />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-faint text-ink-muted">
+              <span>الإجمالي <span className="num font-semibold text-ink">{formatNumber(c.total)}</span></span>
+              <span>ناجحة <span className="num font-semibold text-chip-success-fg">{formatNumber(c.won)}</span></span>
+              <span>خاسرة <span className="num font-semibold text-chip-danger-fg">{formatNumber(c.lost)}</span></span>
             </div>
           </Card>
         ))}
       </div>
 
       {/* الصفقات حسب المرحلة — بالعدد وبالمال */}
-      <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
         {r.dealsByStage.map((p) => (
           <Card key={p.pipeline.id}>
             <CardHeader>
@@ -120,7 +128,7 @@ export default async function ReportsPage() {
         ))}
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
         {/* الإيراد حسب المنتج */}
         <Card>
           <CardHeader>
@@ -147,7 +155,7 @@ export default async function ReportsPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
         {/* الدخل الشهري المتكرر حسب المنتج */}
         <Card>
           <CardHeader>
@@ -173,11 +181,9 @@ export default async function ReportsPage() {
             {r.lostReasons.length ? (
               <ul className="space-y-3">
                 {r.lostReasons.map((l) => (
-                  <li key={l.reason} className="flex items-center justify-between gap-4 border-b border-line pb-3 last:border-0 last:pb-0">
-                    <span className="min-w-0 flex-1 text-sm text-ink">{l.reason}</span>
-                    <span className="num shrink-0 rounded-pill bg-danger/10 px-3 py-1 text-xs font-bold text-danger">
-                      {formatNumber(l.count)}
-                    </span>
+                  <li key={l.reason} className="flex items-center justify-between gap-4 border-b border-line-soft pb-3 last:border-0 last:pb-0">
+                    <span className="min-w-0 flex-1 text-body text-ink">{l.reason}</span>
+                    <Chip tone="danger" className="num shrink-0">{formatNumber(l.count)}</Chip>
                   </li>
                 ))}
               </ul>

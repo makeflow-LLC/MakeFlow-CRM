@@ -5,13 +5,21 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex items-center justify-between gap-3 border-b border-line px-6 py-4', className)} {...props} />
+  return (
+    <div
+      className={cn(
+        'flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line-soft px-4.5 py-4',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('flex items-center gap-2 text-base font-bold text-ink', className)} {...props} />
+  return <h3 className={cn('flex items-center gap-2 text-section font-semibold text-ink', className)} {...props} />
 }
 
 export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('p-6', className)} {...props} />
+  return <div className={cn('p-4.5', className)} {...props} />
 }

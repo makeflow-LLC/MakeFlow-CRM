@@ -2,6 +2,7 @@ import { RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/hints/page-header'
 import { EmptyState } from '@/components/hints/empty-state'
 import { Card } from '@/components/ui/card'
+import { Chip } from '@/components/ui/pill'
 import { AddSubscription } from '@/components/shared/add-dialogs'
 import { HintTooltip } from '@/components/hints/hint-tooltip'
 import { buildSubscriptionRows, getDataset } from '@/lib/data'
@@ -19,6 +20,11 @@ export default async function SubscriptionsPage() {
   const rows = buildSubscriptionRows(data)
   const active = rows.filter((s) => s.status === 'active')
   const mrr = active.reduce((sum, s) => sum + s.monthly_amount, 0)
+  const renewalsSoon = active.filter(
+    (s) => s.days_until_renewal !== null && s.days_until_renewal >= 0 && s.days_until_renewal <= 7,
+  ).length
+
+  const GRID = 'grid-cols-[minmax(230px,1.5fr)_170px_110px_150px_110px] gap-4'
 
   // توزيع الدخل حسب المنتج — شريط واحد بألوان المنتجات
   const byProduct = Object.values(
@@ -47,94 +53,101 @@ export default async function SubscriptionsPage() {
 
       {rows.length ? (
         <>
-          {/* الرقم الكبير + شريط التوزيع */}
-          <Card className="mb-6 p-6">
-            <p className="mb-1 flex items-center gap-1 text-sm font-semibold text-ink-muted">
-              الإيراد الشهري المتكرر
-              <HintTooltip term="mrr" />
-            </p>
-            <p className="num mb-1 text-5xl font-bold text-ink">{formatMoney(mrr)}</p>
-            <p className="mb-6 text-sm text-ink-muted">
-              من <span className="num font-bold text-ink">{formatNumber(active.length)}</span> اشتراكاً فعّالاً
-            </p>
+          {/* الرقم الكبير على سطح داكن — الدخل الثابت أهمّ رقم في الشاشة،
+              والتباين هو ما يجعله يُقرأ أولاً */}
+          <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
+            <div className="rounded-card bg-nav p-4.5 text-white">
+              <p className="mb-1 flex items-center gap-1 text-[13px] font-medium text-nav-muted">
+                الإيراد الشهري المتكرر
+                <HintTooltip term="mrr" />
+              </p>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pb-1.5">
+                <span className="num text-[40px] font-bold leading-none">{formatNumber(mrr)}</span>
+                <span className="text-body text-nav-muted">₪</span>
+                <span className="num rounded-pill bg-[#12B76A]/20 px-2 py-0.5 text-chip font-semibold text-[#6CE9A6]">
+                  {formatNumber(active.length)} فعّال
+                </span>
+              </div>
+              <p className="text-faint text-nav-muted">
+                يصلك شهرياً دون بيع جديد
+                {renewalsSoon > 0 && (
+                  <> · <span className="num">{renewalsSoon}</span> تجديداً خلال أسبوع</>
+                )}
+              </p>
+            </div>
 
             {byProduct.length > 0 && (
-              <>
+              <Card className="p-4.5">
+                <p className="mb-3 text-[13px] font-medium text-ink-muted">التوزيع حسب المنتج</p>
                 <div className="mb-3 flex h-3 w-full overflow-hidden rounded-pill bg-page">
                   {byProduct.map((p) => (
                     <div
                       key={p.name}
                       title={`${p.name}: ${formatMoney(p.amount)}`}
                       style={{ width: `${(p.amount / mrr) * 100}%`, backgroundColor: p.color }}
-                      className="transition-all duration-150"
                     />
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                   {byProduct.map((p) => (
-                    <span key={p.name} className="flex items-center gap-2 text-xs">
-                      <span className="h-3 w-3 rounded-[4px]" style={{ backgroundColor: p.color }} />
+                    <span key={p.name} className="flex items-center gap-1.5 text-faint">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: p.color }} />
                       <span className="font-semibold text-ink">{p.name}</span>
                       <span className="num text-ink-muted">{formatMoney(p.amount)}</span>
                     </span>
                   ))}
                 </div>
-              </>
+              </Card>
             )}
-          </Card>
+          </div>
 
           {/* الجدول — مرتّب حسب موعد التجديد */}
           <Card className="overflow-hidden">
-            <div className="hidden items-center gap-4 border-b border-line bg-page/60 px-6 py-3 text-xs font-bold text-ink-muted lg:flex">
-              <span className="flex-1">الجهة / الشخص</span>
-              <span className="w-[180px]">الباقة</span>
-              <span className="w-[110px]">شهرياً</span>
-              <span className="w-[140px]">التجديد</span>
-              <span className="w-[110px]">الحالة</span>
-            </div>
+            <div className="overflow-x-auto scroll-slim">
+              <div className="min-w-[780px]">
+                <div className={cn('thead grid px-4.5 py-3', GRID)}>
+                  <span>الجهة / الشخص</span>
+                  <span>الباقة</span>
+                  <span>شهرياً</span>
+                  <span>التجديد</span>
+                  <span>الحالة</span>
+                </div>
 
-            <div className="divide-y divide-line">
-              {rows.map((s) => {
-                const d = s.days_until_renewal
-                const overdue = s.status === 'active' && d !== null && d < 0
-                const soon = s.status === 'active' && d !== null && d >= 0 && d <= 7
+                <div className="divide-y divide-line-soft">
+                  {rows.map((s) => {
+                    const d = s.days_until_renewal
+                    const overdue = s.status === 'active' && d !== null && d < 0
+                    const soon = s.status === 'active' && d !== null && d >= 0 && d <= 7
 
-                return (
-                  <div
-                    key={s.id}
-                    className={cn(
-                      'row flex flex-wrap items-center gap-4 px-6 py-3',
-                      overdue && 'border-s-4 border-s-danger bg-danger/[0.03]',
-                      soon && 'border-s-4 border-s-warn bg-warn/[0.04]',
-                    )}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-ink">
-                        {s.organization?.name ?? s.contact?.full_name ?? '—'}
-                      </p>
-                      <p className="truncate text-xs text-ink-muted lg:hidden">{s.plan_name ?? s.product.name}</p>
-                    </div>
-
-                    <span className="hidden w-[180px] truncate text-sm text-ink-muted lg:block">
-                      {s.plan_name ?? s.product.name}
-                    </span>
-                    <span className="w-[110px] text-sm font-bold text-ink">
-                      <span className="num">{formatMoney(s.monthly_amount, s.currency)}</span>
-                    </span>
-                    <span
-                      className={cn(
-                        'w-[140px] text-xs font-bold',
-                        overdue ? 'text-danger' : soon ? 'text-warn' : 'text-ink-muted',
-                      )}
-                    >
-                      {daysLabel(d)}
-                    </span>
-                    <span className="w-[110px] text-xs font-semibold text-ink-muted">
-                      {STATUS_LABELS[s.status]}
-                    </span>
-                  </div>
-                )
-              })}
+                    return (
+                      <div key={s.id} className={cn('row grid items-center px-4.5 py-3', GRID)}>
+                        <p className="truncate text-body font-semibold text-ink">
+                          {s.organization?.name ?? s.contact?.full_name ?? '—'}
+                        </p>
+                        <span className="truncate text-body text-ink-muted">
+                          {s.plan_name ?? s.product.name}
+                        </span>
+                        <span className="num text-body font-bold text-ink">
+                          {formatMoney(s.monthly_amount, s.currency)}
+                        </span>
+                        <span>
+                          <Chip tone={overdue ? 'danger' : soon ? 'warn' : 'neutral'}>
+                            {daysLabel(d)}
+                          </Chip>
+                        </span>
+                        <span
+                          className={cn(
+                            'text-faint font-semibold',
+                            s.status === 'active' ? 'text-chip-success-fg' : 'text-chip-danger-fg',
+                          )}
+                        >
+                          {STATUS_LABELS[s.status]}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </Card>
         </>

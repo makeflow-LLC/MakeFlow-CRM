@@ -24,16 +24,16 @@ export default async function DealsPage({
     <>
       <PageHeader title="الصفقات" hint={pageHints.deals} term="deal" />
 
-      {/* تبويبات المسارات */}
-      <div className="mb-6 inline-flex items-center gap-1 rounded-input border border-line bg-card p-1">
+      {/* تبويبات المسارات — مجموعة رمادية والفعّال بطاقة بيضاء */}
+      <div className="mb-4 inline-flex items-center gap-1 rounded-[10px] bg-[#EDEFF3] p-1">
         {data.pipelines.map((p) => (
           <Link
             key={p.id}
             href={`/deals?pipeline=${p.id}`}
             className={cn(
-              'rounded-[6px] px-4 py-2 text-sm font-semibold transition-all duration-150',
+              'rounded-chip px-4 py-1.5 text-body font-semibold transition-colors duration-150',
               p.id === pipeline.id
-                ? 'bg-accent text-white'
+                ? 'bg-card text-ink'
                 : 'text-ink-muted hover:text-ink',
             )}
           >

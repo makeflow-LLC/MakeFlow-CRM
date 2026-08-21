@@ -4,22 +4,22 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-input text-sm font-semibold transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 whitespace-nowrap',
+  'inline-flex items-center justify-center gap-1.5 rounded-input text-body font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 whitespace-nowrap',
   {
     variants: {
       variant: {
-        primary: 'bg-accent text-white hover:bg-accent-hover shadow-card',
-        soft: 'bg-accent-soft text-accent hover:bg-[#E4E0FA]',
-        outline: 'border border-line bg-card text-ink hover:bg-page',
-        ghost: 'text-ink-muted hover:bg-page hover:text-ink',
-        danger: 'bg-danger text-white hover:brightness-95',
-        success: 'bg-success text-white hover:brightness-95',
+        primary: 'bg-accent text-white hover:bg-accent-hover',
+        soft: 'bg-accent-soft text-chip-accent-fg hover:bg-[#E4E0FA]',
+        outline: 'border border-line bg-card text-ink hover:bg-[#F4F5F8]',
+        ghost: 'text-ink-muted hover:bg-[#F4F5F8] hover:text-ink',
+        danger: 'bg-chip-danger-bg text-chip-danger-fg hover:bg-[#FDD5D2]',
+        success: 'bg-chip-success-bg text-chip-success-fg hover:bg-[#DCF7E7]',
       },
       size: {
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4',
-        lg: 'h-12 px-6 text-base',
-        icon: 'h-10 w-10',
+        sm: 'h-[34px] px-3 text-faint',
+        md: 'h-[38px] px-4',
+        lg: 'h-[44px] px-6 text-body-lg',
+        icon: 'h-[34px] w-[34px] px-0',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

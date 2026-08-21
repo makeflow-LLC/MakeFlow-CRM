@@ -6,18 +6,23 @@
   :root {
     /* نفس التوكنز الموجودة بـ tailwind.config.ts — متوفرة كمتغيرات CSS
        للحالات اللي بنحتاج فيها لون محسوب (زي ألوان المراحل الجاية من قاعدة البيانات) */
-    --page: #f6f7fb;
+    --page: #f6f7f9;
     --card: #ffffff;
-    --line: #e6e9f0;
-    --ink: #1b2437;
-    --ink-muted: #6b7280;
+    --line: #e7e9ef;
+    --line-soft: #f2f4f7;
+    --head: #fafbfc;
+    --ink: #101828;
+    --ink-muted: #667085;
+    --ink-faint: #98a2b3;
     --accent: #5b4ce0;
+    --nav: #12142b;
 
     --radius-card: 12px;
-    --radius-input: 8px;
+    --radius-input: 9px;
+    --radius-chip: 8px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06);
+    --shadow-pop: 0 8px 24px rgba(16, 24, 40, 0.12);
   }
 
   html {
@@ -32,8 +37,8 @@
 
     /* الحرف العربي أعرض وأكثر تفصيلاً من اللاتيني، فيحتاج قياساً أكبر قليلاً
        ومسافة سطر أوسع ليبقى مقروءاً في الجداول والفقرات الطويلة. */
-    font-size: 15px;
-    line-height: 1.75;
+    font-size: 14px;
+    line-height: 1.6;
 
     /* التباعد بين الحروف يكسر اتصال الحرف العربي — يُمنع منعاً باتاً. */
     letter-spacing: 0;
@@ -88,19 +93,34 @@
 }
 
 @layer components {
-  /* البطاقة الأساسية — سطح أبيض على خلفية رمادية فاتحة */
+  /* البطاقة الأساسية — سطح أبيض بحدٍّ رقيق، بلا ظل. الظل في هذا الثيم
+     للطبقات الطافية وحدها (النوافذ والقوائم المنسدلة). */
   .surface {
-    @apply rounded-card border border-line bg-card shadow-card;
+    @apply rounded-card border border-line bg-card;
   }
 
-  /* حبة الحالة الملوّنة: خلفية صلبة ونص أبيض عريض */
+  /* حبة المرحلة: خلفية صلبة ونص أبيض عريض */
   .pill {
-    @apply inline-flex items-center rounded-pill px-3 py-1 text-xs font-bold text-white;
+    @apply inline-flex items-center rounded-pill px-2.5 py-1 text-chip font-semibold text-white;
   }
 
-  /* صفوف الجداول ما بتنضغط أبداً تحت 56px */
+  /* شريحة حالة: زوج خلفية/نص فاتح — لا لون صلب */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-chip font-semibold;
+  }
+
+  /* صفوف الجداول لا تنضغط تحت 52px، وتُضيء عند المرور */
   .row {
     @apply min-h-row transition-colors duration-150;
+  }
+  .row:hover {
+    background: var(--head);
+  }
+
+  /* ترويسة الجدول */
+  .thead {
+    @apply border-b border-line text-faint font-semibold text-ink-muted;
+    background: var(--head);
   }
 }
 
