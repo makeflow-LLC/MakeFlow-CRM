@@ -24,8 +24,15 @@ const STATUSES = [
   { value: 'needs_checking', label: 'أرسل إيصالاً ولم أتأكّد بعد', hint: 'يظهر في «بانتظار التحقق» حتى تؤكّده' },
 ] as const
 
-const selectClass =
-  'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+/**
+ * العرض ليس جزءاً من الأساس عمداً: القائمة الملاصقة لخانة مبلغ تأخذ عرضاً
+ * ضيّقاً، ولو كان `w-full` هنا لتغلّب عليه — الصنفان يتعارضان والترتيب في
+ * ملف الأنماط هو الذي يحسم، لا ترتيبهما في السطر.
+ */
+const selectBase =
+  'h-[38px] rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+
+const selectClass = `w-full ${selectBase}`
 
 /** التاريخ والوقت الحاليان بصيغة datetime-local */
 function nowLocal(): string {
@@ -185,7 +192,7 @@ export function AddPayment({
               <div className="flex gap-2">
                 <Input
                   id="ap-amount" value={amount} inputMode="decimal"
-                  className="num text-right"
+                  className="num min-w-0 flex-1 text-right text-[17px] font-semibold"
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="150"
                 />
@@ -193,10 +200,10 @@ export function AddPayment({
                   aria-label="عملة المبلغ"
                   value={currency}
                   onChange={(e) => pickCurrency(e.target.value)}
-                  className={`${selectClass} w-[130px] shrink-0`}
+                  className={`${selectBase} w-[108px] shrink-0 px-2`}
                 >
                   {CURRENCIES.map((c) => (
-                    <option key={c.code} value={c.code}>{c.label}</option>
+                    <option key={c.code} value={c.code}>{c.short}</option>
                   ))}
                 </select>
               </div>
@@ -214,7 +221,7 @@ export function AddPayment({
                 <div className="flex items-center gap-2">
                   <Input
                     id="ap-rate" value={rate} inputMode="decimal"
-                    className="num text-right"
+                    className="num min-w-0 flex-1 text-right"
                     onChange={(e) => setRate(e.target.value)}
                     placeholder="3.70"
                   />

@@ -39,13 +39,18 @@ const SYMBOLS: Record<string, string> = {
   AED: 'د.إ',
 }
 
-/** العملات المعروضة في قوائم الاختيار */
-export const CURRENCIES: { code: string; label: string }[] = [
-  { code: 'USD', label: 'دولار أمريكي ($)' },
-  { code: 'ILS', label: 'شيكل (₪)' },
-  { code: 'EUR', label: 'يورو (€)' },
-  { code: 'JOD', label: 'دينار أردني' },
-  { code: 'EGP', label: 'جنيه مصري' },
+/**
+ * العملات المعروضة في قوائم الاختيار.
+ *
+ * `short` للقوائم الملاصقة لخانة مبلغ: الخانة الأهم هي الرقم، فلا تأخذ
+ * العملة من عرضها إلا ما يكفي لقراءتها.
+ */
+export const CURRENCIES: { code: string; label: string; short: string }[] = [
+  { code: 'USD', label: 'دولار أمريكي ($)', short: 'دولار $' },
+  { code: 'ILS', label: 'شيكل (₪)', short: 'شيكل ₪' },
+  { code: 'EUR', label: 'يورو (€)', short: 'يورو €' },
+  { code: 'JOD', label: 'دينار أردني', short: 'دينار' },
+  { code: 'EGP', label: 'جنيه مصري', short: 'جنيه' },
 ]
 
 export function symbolFor(code: string): string {

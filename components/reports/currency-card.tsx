@@ -103,7 +103,7 @@ export function CurrencyCard({ base, rates }: { base: string; rates: RateRow[] }
               <div className="flex items-center gap-2">
                 <Input
                   id="rate-value" value={value} autoFocus inputMode="decimal"
-                  className="num text-right"
+                  className="num min-w-0 flex-1 text-right text-[17px] font-semibold"
                   onChange={(e) => setValue(e.target.value)}
                 />
                 <span className="shrink-0 text-body font-semibold text-ink-muted">

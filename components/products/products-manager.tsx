@@ -24,8 +24,11 @@ const KINDS: { value: ProductKind; label: string; hint: string }[] = [
 /** ألوان اللوحة نفسها، ليبقى المنتج الجديد منسجماً مع بقية الواجهة */
 const PALETTE = ['#5B4CE0', '#3B9BE8', '#7B61FF', '#F5A623', '#22C55E', '#0EA47A', '#E8639B', '#E5484D']
 
-const selectClass =
-  'h-[38px] w-full rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+/** العرض خارج الأساس عمداً — انظر التعليق نفسه في add-payment */
+const selectBase =
+  'h-[38px] rounded-input border border-line bg-card px-3 text-body text-ink transition-colors duration-150 hover:border-[#D3D8E3] focus:border-accent focus:outline-none'
+
+const selectClass = `w-full ${selectBase}`
 
 export function ProductsManager({ products }: { products: Product[] }) {
   const router = useRouter()
@@ -297,7 +300,8 @@ function ProductForm({
             <Label htmlFor="pr-price">السعر الافتراضي وعملته</Label>
             <div className="flex gap-2">
               <Input
-                id="pr-price" value={price} className="num text-right"
+                id="pr-price" value={price}
+                className="num min-w-0 flex-1 text-right text-[17px] font-semibold"
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="250"
               />
@@ -305,10 +309,10 @@ function ProductForm({
                 aria-label="عملة المنتج"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className={`${selectClass} w-[130px] shrink-0`}
+                className={`${selectBase} w-[108px] shrink-0 px-2`}
               >
                 {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.label}</option>
+                  <option key={c.code} value={c.code}>{c.short}</option>
                 ))}
               </select>
             </div>
